@@ -85,7 +85,6 @@ module.exports =
         get(id) {
             if (this.repository != null) {
                 if (this.readAuthorization()) {
-                    // if we have no parameter, expose the list of possible query strings
                     if (this.params === null) {
                         if (!isNaN(id)) {
                             let data = this.repository.get(id);
@@ -130,13 +129,17 @@ module.exports =
         put(data) {
             if (this.repository != null) {
                 if (this.writeAuthorization()) {
-                    if (this.repository.update(data) == "ok")
+                    let result = this.repository.update(data);
+                    if (result == "ok")
                         this.response.ok();
                     else
-                        if (this.repository.update(data) == "conflict")
+                        if (result == "conflict")
                             this.response.conflict();
                         else
-                            this.response.unprocessable();
+                            if (result == "not found")
+                                this.response.notFound();
+                            else // invalid
+                                this.response.unprocessable();
                 } else
                     this.response.unAuthorized();
             } else
@@ -150,7 +153,7 @@ module.exports =
                     else
                         this.response.notFound();
                 } else
-                    this.response.unAuthorized(); F
+                    this.response.unAuthorized();
             } else
                 this.response.notImplemented();
         }

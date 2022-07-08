@@ -33,24 +33,23 @@ class ImagesRepository extends Repository {
     }
     add(image) {
         image["Created"] = utilities.nowInSeconds();
-        if (this.model.valid(image)) {
-            image["GUID"] = ImageFilesRepository.storeImageData("", image["ImageData"]);
-            delete image["ImageData"];
-            return super.add(image);
+        let imageData = image["ImageData"];
+        delete image["ImageData"];
+        let newImage = super.add(image);
+        if (!newImage.error) {
+            image["GUID"] = ImageFilesRepository.storeImageData("", imageData);
         }
-        return null;
+        return newImage;
     } 
     update(image) {
         image["Created"] = utilities.nowInSeconds();
-        if (this.model.valid(image)) {
-            let foundImage = super.get(image.Id);
-            if (foundImage != null) {
-                image["GUID"] = ImageFilesRepository.storeImageData(image["GUID"], image["ImageData"]);
-                delete image["ImageData"];
-                return super.update(image);
-            }
+        let imageData = image["ImageData"];
+        delete image["ImageData"];
+        let result = super.update(image);
+        if (result == "ok") {
+            image["GUID"] = ImageFilesRepository.storeImageData(image["GUID"], imageData);
         }
-        return false;
+        return result;
     }
     remove(id){
         let foundImage = super.get(id);

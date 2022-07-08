@@ -111,6 +111,41 @@ class Repository {
             return null;
         }
     }
+    update(objectToModify) {
+        if (this.model.valid(objectToModify)) {
+            let conflict = false;
+            if (this.model.key) {
+                conflict = this.findByField(this.model.key, objectToModify[this.model.key], objectToModify.Id) != null;
+            }
+            if (!conflict) {
+                 let index = 0;
+                for (let object of this.objects()) {
+                    if (object.Id === objectToModify.Id) {
+                        this.objectsList[index] = objectToModify;
+                        this.write();
+                        return "ok";
+                    }
+                    index++;
+                }
+                return "not found";
+            } else {
+                return "conflict";
+            }
+        }
+        return "invalid";
+    }
+    remove(id) {
+        let index = 0;
+        for (let object of this.objects()) {
+            if (object.Id === id) {
+                this.objectsList.splice(index, 1);
+                this.write();
+                return true;
+            }
+            index++;
+        }
+        return false;
+    }
     bindExtraData(datas) {
         let bindedDatas = [];
         for (let data of datas) {
@@ -140,46 +175,14 @@ class Repository {
         }
         return null;
     }
-    remove(id) {
-        let index = 0;
-        for (let object of this.objects()) {
-            if (object.Id === id) {
-                this.objectsList.splice(index, 1);
-                this.write();
-                return true;
-            }
-            index++;
-        }
-        return false;
-    }
+    
     removeByIndex(indexToDelete) {
         if (indexToDelete.length > 0) {
             utilities.deleteByIndex(this.objects(), indexToDelete);
             this.write();
         }
     }
-    update(objectToModify) {
-        if (this.model.valid(objectToModify)) {
-            let conflict = false;
-            if (this.model.key) {
-                conflict = this.findByField(this.model.key, objectToModify[this.model.key], objectToModify.Id) != null;
-            }
-            if (!conflict) {
-                let index = 0;
-                for (let object of this.objects()) {
-                    if (object.Id === objectToModify.Id) {
-                        this.objectsList[index] = objectToModify;
-                        this.write();
-                        return "ok";
-                    }
-                    index++;
-                }
-            } else {
-                return "conflict";
-            }
-        }
-        return "invalid";
-    }
+   
     findByField(fieldName, value, excludedId = 0) {
         let index = 0;
         for (let object of this.objects()) {
