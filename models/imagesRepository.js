@@ -1,22 +1,22 @@
 
-const Repository = require('./repository');
-const usersRepository = require('./usersRepository');
-
+ // Attention de ne pas avoir des références circulaire
+ // const UsersRepository = require('./usersRepository'); pas ici sinon référence ciculaire
 const ImageFilesRepository = require('./imageFilesRepository.js');
-const Image = require('./image.js');
+const ImageModel = require('./image.js');
 const utilities = require("../utilities");
 var host = require('../APIServer').getHttpContext().host;
 
 module.exports =
-    class ImagesRepository extends Repository {
+    class ImagesRepository extends require('./repository') {
         constructor() {
-            super(new Image(), true /* cached */);
-            this.usersRepository = new usersRepository();
+            super(new ImageModel(), true /* cached */);
             this.setBindExtraDataMethod(this.bindUsernameAndImageURL);
         }
         bindUsernameAndImageURL(image) {
             if (image) {
-                let user = this.usersRepository.get(image.UserId);
+                const UsersRepository = require('./usersRepository');
+                let usersRepository = new UsersRepository();
+                let user = usersRepository.get(image.UserId);
                 let username = "unknown";
                 if (user)
                     username = user.Name;
@@ -24,6 +24,7 @@ module.exports =
                 bindedImage["Username"] = username;
                 bindedImage["Date"] = utilities.secondsToDateString(image["Created"]);
                 if (image["GUID"] != "") {
+                    // todo verify http or https
                     bindedImage["OriginalURL"] = "http://" + host + ImageFilesRepository.getImageFileURL(image["GUID"]);
                     bindedImage["ThumbnailURL"] = "http://" + host + ImageFilesRepository.getThumbnailFileURL(image["GUID"]);
                 } else {

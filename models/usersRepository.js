@@ -1,16 +1,13 @@
-const Repository = require('./repository');
-const ImagesRepository = require('./imagesRepository.js');
 const ImageFilesRepository = require('./imageFilesRepository.js');
-const User = require('./user.js');
-const Bookmark = require('./bookmark.js');
+const UserModel = require('./user.js');
 const Cache = require('../getRequestsCacheManager');
 const utilities = require("../utilities");
 var host = require('../APIServer').getHttpContext().host;
 
 module.exports = 
-class UsersRepository extends Repository {
+class UsersRepository extends require('./repository') {
     constructor(){
-        super(new User(), true);
+        super(new UserModel(), true);
     }
     bindAvatarURL(user){
         if (user) {
@@ -62,8 +59,8 @@ class UsersRepository extends Repository {
     }
     
     deleteAllUsersBookmarks(userId) {
-        let bookmarkModel = new Bookmark();
-        let bookmarksRepository = new Repository(bookmarkModel, true);
+        const BookmarksRepository = require('./bookmarksRepository.js');
+        let bookmarksRepository = new BookmarksRepository(bookmarkModel, true);
         let bookmarks = bookmarksRepository.getAll();
         let indexToDelete = [];
         let index = 0;
@@ -76,7 +73,8 @@ class UsersRepository extends Repository {
         Cache.clear('bookmarks');
     }
     deleteAllUsersImages(userId) {
-        let imagesRepository = new ImagesRepository(this.req, true);
+        const ImagesRepository = require('./imagesRepository.js');
+        let imagesRepository = new ImagesRepository();
         let images = imagesRepository.getAll();
         let indexToDelete = [];
         let index = 0;

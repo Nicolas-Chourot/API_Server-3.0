@@ -3,11 +3,9 @@ module.exports =
         constructor() {
             this.fields = [];
         }
-
         addField(name, type) {
             this.fields.push({ name: name, type: type });
         }
-
         valueValid(value, type) {
             if (value !== null) {
                 switch (type) {

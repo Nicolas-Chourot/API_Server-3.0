@@ -3,8 +3,6 @@ const ImagesRepository = require('../models/imagesRepository');
 const TokenManager = require('../tokenManager');
 const utilities = require("../utilities");
 const User = require('../models/user');
-const Cache = require('../getRequestsCacheManager');
-const Repository = require('../models/repository');
 
 module.exports =
     class AccountsController extends require('./Controller') {
@@ -72,5 +70,8 @@ module.exports =
             this.put(user);
             let imagesRepository = new ImagesRepository();
             imagesRepository.newETag();
+        }
+        remove(id){
+            super.remove(id);
         }
     }
