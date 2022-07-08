@@ -22,10 +22,10 @@ class UsersRepository extends require('./repository') {
         }
         return null;
     }
-    bindAvatarURLS(images){
+    bindAvatarURLS(users){
         let bindedUsers = [];
-        for(let image of images) {
-            bindedUsers.push(this.bindAvatarURL(image));
+        for(let user of users) {
+            bindedUsers.push(this.bindAvatarURL(user));
         };
         return bindedUsers;
     }
