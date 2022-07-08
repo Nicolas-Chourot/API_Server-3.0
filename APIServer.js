@@ -1,13 +1,20 @@
 var clc = require("cli-color");
+const utilities = require('./utilities.js');
+const Response = require('./response');
+let httpContext = {};
+
 module.exports =
     class APIServer {
         constructor(port = process.env.PORT || 5000) {
             this.port = port;
-            this.Hide_HEAD_Request = true;
+            this.Hide_HEAD_Request = false;
             this.Hide_Request_Info = false;
             this.initMiddlewaresPipeline();
             this.accountsRouteConfig();
             this.httpServer = require('http').createServer(async (req, res) => { this.handleHttpResquest(req, res) });
+        }
+        static getHttpContext() {
+            return httpContext;
         }
         static accessControlConfig(res) {
             res.setHeader('Access-Control-Allow-Origin', '*');
@@ -20,7 +27,7 @@ module.exports =
             RouteRegister.add('GET', 'accounts');
             RouteRegister.add('POST', 'accounts', 'register');
             RouteRegister.add('POST', 'accounts', 'logout');
-            RouteRegister.add('PUT', 'accounts', 'change');
+            RouteRegister.add('PUT', 'accounts', 'modify');
             RouteRegister.add('DELETE', 'accounts', 'remove');
         }
         static CORS_Prefligth(req, res) {
@@ -94,11 +101,19 @@ module.exports =
             // for more info https://www.valentinog.com/blog/node-usage/
             const used = process.memoryUsage();
             console.
-            log(clc.magenta("Memory usage: ", "RSet size:", Math.round(used.rss / 1024 / 1024 * 100) / 100, "Mb |",
-                "Heap size:", Math.round(used.heapTotal / 1024 / 1024 * 100) / 100, "Mb |",
-                "Used size:", Math.round(used.heapUsed / 1024 / 1024 * 100) / 100, "Mb"));
+                log(clc.magenta("Memory usage: ", "RSet size:", Math.round(used.rss / 1024 / 1024 * 100) / 100, "Mb |",
+                    "Heap size:", Math.round(used.heapTotal / 1024 / 1024 * 100) / 100, "Mb |",
+                    "Used size:", Math.round(used.heapUsed / 1024 / 1024 * 100) / 100, "Mb"));
+        }
+        createHttpContext(req, res) {
+            httpContext.req = req;
+            httpContext.res = res;
+            httpContext.host = req.headers["host"]
+            httpContext.path = utilities.decomposePath(req.url);
+            httpContext.response = new Response(res, req.url);
         }
         async handleHttpResquest(req, res) {
+            this.createHttpContext(req, res);
             this.showRequestInfo(req);
             if (!(await this.middlewaresPipeline.handleHttpRequest(req, res)))
                 await this.responseNotFound(res);

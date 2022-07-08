@@ -104,7 +104,7 @@ exports.Registered_EndPoint = function (req, res) {
                 response.notFound();
                 resolve(true);
             }
-        }
+        } else
         // not an registered endpoint
         // request not consumed
         // must be handled by another middleware

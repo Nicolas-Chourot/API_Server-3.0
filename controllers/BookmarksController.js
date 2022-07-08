@@ -1,6 +1,8 @@
 const Repository = require('../models/repository');
+const UsersRepository = require('../models/usersRepository');
 const Bookmark = require('../models/bookmark');
 const User = require('../models/user');
+
 module.exports =
     class BookmarksController extends require('./Controller') {
         constructor(req, res, params) {
@@ -11,7 +13,7 @@ module.exports =
         }
         
         resolveUserName(bookmark) {
-            let users = new Repository(new User()); 
+            let users = new UsersRepository(); 
             let user = users.get(bookmark.UserId);
             let username = "unknown";
             if (user !== null)

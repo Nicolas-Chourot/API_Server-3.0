@@ -114,12 +114,11 @@ module.exports =
                 if (this.writeAuthorization()) {
                     data = this.repository.add(data);
                     if (data) {
-                        if (data.error == "conflict")
+                        if (data.conflict)
                             this.response.conflict();
                         else
                             this.response.created(data);
-                    }
-                    else
+                    } else
                         this.response.unprocessable();
                 } else
                     this.response.unAuthorized();

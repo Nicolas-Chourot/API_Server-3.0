@@ -99,7 +99,7 @@ class Repository {
                     this.objectsList.push(object);
                     this.write();
                 } else {
-                    object.error = "conflict";
+                    object.conflict = true;
                 }
                 return object;
             }
@@ -118,7 +118,7 @@ class Repository {
                 conflict = this.findByField(this.model.key, objectToModify[this.model.key], objectToModify.Id) != null;
             }
             if (!conflict) {
-                 let index = 0;
+                let index = 0;
                 for (let object of this.objects()) {
                     if (object.Id === objectToModify.Id) {
                         this.objectsList[index] = objectToModify;
@@ -175,25 +175,27 @@ class Repository {
         }
         return null;
     }
-    
+
     removeByIndex(indexToDelete) {
         if (indexToDelete.length > 0) {
             utilities.deleteByIndex(this.objects(), indexToDelete);
             this.write();
         }
     }
-   
+
     findByField(fieldName, value, excludedId = 0) {
-        let index = 0;
-        for (let object of this.objects()) {
-            try {
-                if (object[fieldName] === value) {
-                    if (object.Id != excludedId)
-                        return this.objectsList[index];
+        if (fieldName) {
+            let index = 0;
+            for (let object of this.objects()) {
+                try {
+                    if (object[fieldName] === value) {
+                        if (object.Id != excludedId)
+                            return this.objectsList[index];
+                    }
+                    index++;
+                } catch (error) {
+                    break;
                 }
-                index++;
-            } catch (error) {
-                break;
             }
         }
         return null;

@@ -9,8 +9,8 @@ class User extends Model{
         this.Password = password !== undefined ? password : "";
         this.Created = 0;
         this.AvatarGUID = avatarGUID !== undefined ? avatarGUID : "";
+        this.key = "Email";
 
-        this.addValidator('Id','integer');
         this.addValidator('Name','string');
         this.addValidator('Email','email');
         this.addValidator('Created','integer');
