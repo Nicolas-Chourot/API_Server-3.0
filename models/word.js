@@ -1,18 +1,13 @@
+const Model = require('./Model');
 module.exports = 
-class Word{
+class Word extends Model{
     constructor(word, definition)
     {
-        this.Id = 0;
+        super();
         this.Word = word !== undefined ? word : "";
         this.Definition = definition !== undefined ? definition : "";
-    }
 
-    static valid(instance) {
-        const Validator = new require('./validator');
-        let validator = new Validator();
-        validator.addField('Id','integer');
-        validator.addField('Word','string');
-        validator.addField('Definition','string');
-        return validator.test(instance);
+        this.addValidator('Word','string');
+        this.addValidator('Definition','string');
     }
 }

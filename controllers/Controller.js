@@ -1,5 +1,4 @@
 const Response = require('../response');
-const utilities = require('../utilities');
 const TokenManager = require('../tokenManager');
 /////////////////////////////////////////////////////////////////////
 // Important note about controllers:
@@ -10,22 +9,42 @@ const TokenManager = require('../tokenManager');
 /////////////////////////////////////////////////////////////////////
 module.exports =
     class Controller {
-        constructor(req, res, params, needAuthorization = false) {
+        constructor(req, res, params) {
             if (req != null && res != null) {
                 this.req = req;
                 this.res = res;
                 this.response = new Response(res, this.req.url);
                 this.params = params;
                 // if true, will require a valid bearer token from request header
-                this.needAuthorization = needAuthorization;
+                this.needReadAuthorization = false;
+                this.needWriteAuthorization = true;
+                this.repository = null;
+                this.model = null;
             }
         }
-        requestAuthorized() {
-            if (this.needAuthorization) {
-                return TokenManager.requestAuthorized(this.req);
+        readAuthorization() {
+            if (this.needReadAuthorization) {
+                if (TokenManager.requestAuthorized(this.req))
+                    return true;
+                else {
+                    this.response.unAuthorized();
+                    return false;
+                }
             }
             return true;
         }
+        writeAuthorization() {
+            if (this.needWriteAuthorization) {
+                if (TokenManager.requestAuthorized(this.req))
+                    return true;
+                else {
+                    this.response.unAuthorized();
+                    return false;
+                }
+            }
+            return true;
+        }
+
         requestActionAuthorized() {
             return TokenManager.requestAuthorized(this.req);
         }
@@ -57,21 +76,82 @@ module.exports =
             return false;
         }
         head() {
-            this.response.notImplemented();
+            if (this.repository != null) {
+                this.response.JSON(null, this.repository.ETag);
+            } else
+                this.response.notImplemented();
         }
-        getAll() {
-            this.response.notImplemented();
-        }
+
         get(id) {
-            this.response.notImplemented();
+            if (this.repository != null) {
+                if (this.readAuthorization()) {
+                    // if we have no parameter, expose the list of possible query strings
+                    if (this.params === null) {
+                        if (!isNaN(id)) {
+                            let data = this.repository.get(id);
+                            if (data != null)
+                                this.response.JSON(data);
+                            else
+                                this.response.notFound();
+                        }
+                        else
+                            this.response.JSON(this.repository.getAll(),
+                                this.repository.ETag);
+                    }
+                    else {
+                        if (Object.keys(this.params).length === 0) /* ? only */ {
+                            this.queryStringHelp();
+                        } else {
+                            this.response.JSON(this.repository.getAll(this.params), this.repository.ETag);
+                        }
+                    }
+                } else
+                    this.response.unAuthorized();
+            } else
+                this.response.notImplemented();
         }
-        post(obj) {
-            this.response.notImplemented();
+        post(data) {
+            if (this.repository != null) {
+                if (this.writeAuthorization()) {
+                    data = this.repository.add(data);
+                    if (data) {
+                        if (data.error == "conflict")
+                            this.response.conflict();
+                        else
+                            this.response.created(data);
+                    }
+                    else
+                        this.response.unprocessable();
+                } else
+                    this.response.unAuthorized();
+            } else
+                this.response.notImplemented();
         }
-        put(obj) {
-            this.response.notImplemented();
+        put(data) {
+            if (this.repository != null) {
+                if (this.writeAuthorization()) {
+                    if (this.repository.update(data) == "ok")
+                        this.response.ok();
+                    else
+                        if (this.repository.update(data) == "conflict")
+                            this.response.conflict();
+                        else
+                            this.response.unprocessable();
+                } else
+                    this.response.unAuthorized();
+            } else
+                this.response.notImplemented();
         }
         remove(id) {
-            this.response.notImplemented();
+            if (this.repository != null) {
+                if (this.writeAuthorization()) {
+                    if (this.repository.remove(id))
+                        this.response.accepted();
+                    else
+                        this.response.notFound();
+                } else
+                    this.response.unAuthorized(); F
+            } else
+                this.response.notImplemented();
         }
     }

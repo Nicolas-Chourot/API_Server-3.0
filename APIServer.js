@@ -42,19 +42,20 @@ module.exports =
             });
         }
         initMiddlewaresPipeline() {
+            const staticResourceServer = require('./staticRessourcesServer');
             const MiddlewaresPipeline = require('./middlewaresPipeline');
             this.middlewaresPipeline = new MiddlewaresPipeline();
 
             // common middlewares
-            this.middlewaresPipeline.add(require('./staticRessourcesServer').sendRequestedFile);
+            this.middlewaresPipeline.add(staticResourceServer.sendRequestedRessource);
             this.middlewaresPipeline.add(APIServer.CORS_Prefligth);
 
             // API middlewares
             const router = require('./router');
-            this.middlewaresPipeline.add(router.dispatch_Cached_EndPoint);
-            this.middlewaresPipeline.add(router.dispatch_TOKEN_EndPoint);
-            this.middlewaresPipeline.add(router.dispatch_Registered_EndPoint);
-            this.middlewaresPipeline.add(router.dispatch_API_EndPoint);
+            this.middlewaresPipeline.add(router.Cached_EndPoint);
+            this.middlewaresPipeline.add(router.TOKEN_EndPoint);
+            this.middlewaresPipeline.add(router.Registered_EndPoint);
+            this.middlewaresPipeline.add(router.API_EndPoint);
         }
         showRequestInfo(req) {
             let hide = this.Hide_Request_Info;
@@ -92,7 +93,8 @@ module.exports =
         showMemoryUsage() {
             // for more info https://www.valentinog.com/blog/node-usage/
             const used = process.memoryUsage();
-            console.log(clc.magenta("Memory usage: ", "RSet size:", Math.round(used.rss / 1024 / 1024 * 100) / 100, "Mb |",
+            console.
+            log(clc.magenta("Memory usage: ", "RSet size:", Math.round(used.rss / 1024 / 1024 * 100) / 100, "Mb |",
                 "Heap size:", Math.round(used.heapTotal / 1024 / 1024 * 100) / 100, "Mb |",
                 "Used size:", Math.round(used.heapUsed / 1024 / 1024 * 100) / 100, "Mb"));
         }

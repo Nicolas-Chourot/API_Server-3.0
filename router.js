@@ -28,7 +28,7 @@ function makeControllerName(modelName) {
     return undefined;
 }
 
-exports.dispatch_Cached_EndPoint = function (req, res) {
+exports.Cached_EndPoint = function (req, res) {
     return new Promise(async (resolve) => {
         if (req.method == 'GET') {
             const Cache = require('./getRequestsCacheManager');
@@ -42,7 +42,7 @@ exports.dispatch_Cached_EndPoint = function (req, res) {
         resolve(false);
     });
 }
-exports.dispatch_TOKEN_EndPoint = function (req, res) {
+exports.TOKEN_EndPoint = function (req, res) {
     return new Promise(async (resolve) => {
         let url = utilities.removeQueryString(req.url);
         if (url == '/token' && req.method == "POST") {
@@ -70,7 +70,7 @@ exports.dispatch_TOKEN_EndPoint = function (req, res) {
 }
 
 // {method, ControllerName, Action}
-exports.dispatch_Registered_EndPoint = function (req, res) {
+exports.Registered_EndPoint = function (req, res) {
     return new Promise(async (resolve) => {
         const RouteRegister = require('./routeRegister');
         let response = new Response(res);
@@ -84,25 +84,16 @@ exports.dispatch_Registered_EndPoint = function (req, res) {
                 // instanciate the controller       
                 let controller = new Controller(req, res);
 
-                if (!controller.requestAuthorized()) {
-                    console.log(clc.red(`unauthorized access to ${controllerName}`));
-                    response.unAuthorized();
-                    // request consumed
-                    resolve(true);
-                }
-
                 if (route.method === 'POST' || route.method === 'PUT') {
                     if (isJSONContent(req, res)) {
                         let JSONBody = await getJSONBody(req);
                         controller[route.actionName](JSONBody);
                     }
                 }
-                else
+                else {
                     controller[route.actionName](route.id);
-
-                // request consumed
+                }
                 resolve(true);
-
             } catch (error) {
                 // catch likely called because of missing controller class
                 // i.e. require('./' + controllerName) failed
@@ -111,7 +102,6 @@ exports.dispatch_Registered_EndPoint = function (req, res) {
                 console.log(clc.redBright('------------------'));
                 console.log((clc.red(error)));
                 response.notFound();
-                // request consumed
                 resolve(true);
             }
         }
@@ -129,7 +119,7 @@ exports.dispatch_Registered_EndPoint = function (req, res) {
 // /api/{ressource name}/{id}
 // then select the targeted controller
 // using the http verb (req.method) and optionnal id
-// call the right controller function
+// call the right controller function (action)
 // warning: this function does not handle sub resource
 // of like the following : api/resource/id/subresource/id?....
 //
@@ -138,7 +128,7 @@ exports.dispatch_Registered_EndPoint = function (req, res) {
 // For ressource name RessourName you have to name the controller
 // RessourceNamesController that must inherit from Controller class
 /////////////////////////////////////////////////////////////////////
-exports.dispatch_API_EndPoint = function (req, res) {
+exports.API_EndPoint = function (req, res) {
     return new Promise(async (resolve) => {
         let exit = false;
         if (req.url == "/api") {
@@ -168,38 +158,39 @@ exports.dispatch_API_EndPoint = function (req, res) {
                         // instanciate the controller       
                         let controller = new Controller(req, res, path.params);
 
-                        if (!controller.requestAuthorized()) {
-                            console.log('unauthorized access!');
-                            response.unAuthorized();
-                            resolve(true);
+
+                        switch (req.method) {
+                            case 'HEAD':
+                                controller.head();
+                                resolve(true);
+                                break;
+                            case 'GET':
+                                controller.get(id);
+                                resolve(true);
+                                break;
+                            case 'POST':
+                                if (isJSONContent(req, res)) {
+                                    let JSONBody = await getJSONBody(req);
+                                    controller.post(JSONBody);
+                                }
+                                resolve(true);
+                                break;
+                            case 'PUT':
+                                if (isJSONContent(req, res)) {
+                                    let JSONBody = await getJSONBody(req);
+                                    controller.put(JSONBody);
+                                }
+                                resolve(true);
+                                break;
+                            case 'DELETE':
+                                controller.remove(id);
+                                resolve(true);
+                                break;
+                            default:
+                                response.notImplemented();
+                                resolve(true);
+                                break;
                         }
-                        if (req.method === 'HEAD') {
-                            controller.head();
-                            resolve(true);
-                        }
-                        if (req.method === 'GET') {
-                            controller.get(id);
-                            resolve(true);
-                        }
-                        if (req.method === 'POST') {
-                            if (isJSONContent(req, res)) {
-                                let JSONBody = await getJSONBody(req);
-                                controller.post(JSONBody);
-                            }
-                            resolve(true);
-                        }
-                        if (req.method === 'PUT') {
-                            if (isJSONContent(req, res)) {
-                                let JSONBody = await getJSONBody(req);
-                                controller.put(JSONBody);
-                            }
-                            resolve(true);
-                        }
-                        if (req.method === 'DELETE') {
-                            controller.remove(id);
-                            resolve(true);
-                        }
-                        resolve(true);
                     } catch (error) {
                         // catch likely called because of missing controller class
                         // i.e. require('./' + controllerName) failed

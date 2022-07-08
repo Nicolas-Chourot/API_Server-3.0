@@ -5,7 +5,8 @@ module.exports =
     class WordsController extends require('./Controller') {
         constructor(req, res, params) {
             super(req, res, params);
-            this.wordsRepository = new Repository('Words', true);
+            this.repository = new Repository(Word, true);
+            this.wordsRepository = this.repository;
         }
         
         head() {

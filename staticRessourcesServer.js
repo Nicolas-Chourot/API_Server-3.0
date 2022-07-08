@@ -17,7 +17,7 @@ function extToContentType(filePath) {
     return 'text/html';
 }
 
-exports.sendRequestedFile = (req, res) => {
+exports.sendRequestedRessource = (req, res) => {
     return new Promise(async (resolve) => {
         let filePath = requestedStaticRessource(req.url);
         let contentType = extToContentType(filePath);

@@ -1,22 +1,18 @@
+const Model = require('./Model');
 module.exports = 
-class User{
+class User extends Model{
     constructor(name, email, password, avatarGUID)
     {
-        this.Id = 0;
+        super();
         this.Name = name !== undefined ? name : "";
         this.Email = email !== undefined ? email : "";
         this.Password = password !== undefined ? password : "";
         this.Created = 0;
         this.AvatarGUID = avatarGUID !== undefined ? avatarGUID : "";
-    }
 
-    static valid(instance) {
-        const Validator = new require('./validator');
-        let validator = new Validator();
-        validator.addField('Id','integer');
-        validator.addField('Name','string');
-        validator.addField('Email','email');
-        validator.addField('Created','integer');
-        return validator.test(instance);
+        this.addValidator('Id','integer');
+        this.addValidator('Name','string');
+        this.addValidator('Email','email');
+        this.addValidator('Created','integer');
     }
 }

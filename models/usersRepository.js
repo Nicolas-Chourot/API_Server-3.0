@@ -5,7 +5,7 @@ const utilities = require("../utilities");
 module.exports = 
 class UsersRepository extends Repository {
     constructor(req){
-        super('Users', true);
+        super(new User(), true);
         this.req = req;
     }
     bindAvatarURL(user){
@@ -35,7 +35,7 @@ class UsersRepository extends Repository {
     }
     add(user) {
         user["Created"] = utilities.nowInSeconds();
-        if (User.valid(user)) {
+        if (this.model.valid(user)) {
             user["AvatarGUID"] = ImageFilesRepository.storeImageData("", user["ImageData"]);
             delete user["ImageData"];
             return this.bindAvatarURL(super.add(user));
@@ -43,10 +43,9 @@ class UsersRepository extends Repository {
         return null;
     }
     update(user) {
-        user["Created"] = 0; // will take the original creation date, see lower
-        if (User.valid(user)) {
+        if (this.model.valid(user)) {
             let foundUser = super.get(user.Id);
-            if (foundUser != null) {
+            if (foundUser) {
                 user["Created"] = foundUser["Created"];
                 user["AvatarGUID"] = ImageFilesRepository.storeImageData(user["AvatarGUID"], user["ImageData"]);
                 delete user["ImageData"];

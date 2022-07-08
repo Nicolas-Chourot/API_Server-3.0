@@ -2,11 +2,12 @@ const Repository = require('./repository');
 const ImageFilesRepository = require('./imageFilesRepository.js');
 const Image = require('./image.js');
 const utilities = require("../utilities");
+const User = require('./user');
 module.exports = 
 class ImagesRepository extends Repository {
     constructor(req){
-        super('Images', true);
-        this.users = new Repository('Users');
+        super(new Image(), true);
+        this.users = new Repository(new User());
         this.req = req;
         this.setBindExtraDataMethod(this.bindUsernameAndImageURL);
     }
@@ -14,7 +15,7 @@ class ImagesRepository extends Repository {
         if (image) {
             let user = this.users.get(image.UserId);
             let username = "unknown";
-            if (user !== null)
+            if (user)
                 username = user.Name;
             let bindedImage = {...image};
             bindedImage["Username"] = username;
@@ -32,16 +33,16 @@ class ImagesRepository extends Repository {
     }
     add(image) {
         image["Created"] = utilities.nowInSeconds();
-        if (Image.valid(image)) {
+        if (this.model.valid(image)) {
             image["GUID"] = ImageFilesRepository.storeImageData("", image["ImageData"]);
             delete image["ImageData"];
             return super.add(image);
         }
         return null;
-    }
+    } 
     update(image) {
         image["Created"] = utilities.nowInSeconds();
-        if (Image.valid(image)) {
+        if (this.model.valid(image)) {
             let foundImage = super.get(image.Id);
             if (foundImage != null) {
                 image["GUID"] = ImageFilesRepository.storeImageData(image["GUID"], image["ImageData"]);

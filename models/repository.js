@@ -6,6 +6,7 @@ const utilities = require('../utilities.js');
 const CollectionFilter = require('./collectionFilter.js');
 const RepositoryCachesManager = require("./repositoryCachesManager.js");
 const getRequestCache = require('../getRequestsCacheManager');
+const Model = require('./Model.js');
 ///////////////////////////////////////////////////////////////////////////
 // This class provide CRUD operations on JSON objects collection text file 
 // with the assumption that each object have an Id member.
@@ -15,10 +16,11 @@ const getRequestCache = require('../getRequestsCacheManager');
 let repositoryEtags = {};
 
 class Repository {
-    constructor(objectsName, cached = false) {
+    constructor(ModelClass, cached = false) {
         this.objectsList = null;
-        this.objectsFile = `./data/${objectsName}.json`;
-        this.objectsName = objectsName.toLowerCase();
+        this.model = ModelClass;
+        this.objectsName = ModelClass.getClassName() + 's';
+        this.objectsFile = `./data/${this.objectsName}.json`;
         this.initEtag();
         this.cached = cached;
         this.bindExtraDataMethod = null;
@@ -87,10 +89,21 @@ class Repository {
     }
     add(object) {
         try {
-            object.Id = this.nextId();
-            this.objectsList.push(object);
-            this.write();
-            return object;
+            if (this.model.valid(object)) {
+                let conflict = false;
+                if (this.model.key) {
+                    conflict = this.findByField(this.model.key, object[this.model.key]) != null;
+                }
+                if (!conflict) {
+                    object.Id = this.nextId();
+                    this.objectsList.push(object);
+                    this.write();
+                } else {
+                    object.error = "conflict";
+                }
+                return object;
+            }
+            return null;
         } catch (error) {
             console.log(clc.redBright(`Error adding new item in ${this.objectsName} repository`));
             console.log(clc.redBright('-------------------------------------------------------'));
@@ -146,23 +159,34 @@ class Repository {
         }
     }
     update(objectToModify) {
-        let index = 0;
-        for (let object of this.objects()) {
-            if (object.Id === objectToModify.Id) {
-                this.objectsList[index] = objectToModify;
-                this.write();
-                return true;
+        if (this.model.valid(objectToModify)) {
+            let conflict = false;
+            if (this.model.key) {
+                conflict = this.findByField(this.model.key, objectToModify[this.model.key], objectToModify.Id) != null;
             }
-            index++;
+            if (!conflict) {
+                let index = 0;
+                for (let object of this.objects()) {
+                    if (object.Id === objectToModify.Id) {
+                        this.objectsList[index] = objectToModify;
+                        this.write();
+                        return "ok";
+                    }
+                    index++;
+                }
+            } else {
+                return "conflict";
+            }
         }
-        return false;
+        return "invalid";
     }
-    findByField(fieldName, value) {
+    findByField(fieldName, value, excludedId = 0) {
         let index = 0;
         for (let object of this.objects()) {
             try {
                 if (object[fieldName] === value) {
-                    return this.objectsList[index];
+                    if (object.Id != excludedId)
+                        return this.objectsList[index];
                 }
                 index++;
             } catch (error) {
