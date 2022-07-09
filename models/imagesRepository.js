@@ -11,12 +11,12 @@ module.exports =
         constructor() {
             super(new ImageModel(), true /* cached */);
             this.setBindExtraDataMethod(this.bindUsernameAndImageURL);
+            const UsersRepository = require('./usersRepository');
+            this.usersRepository = new UsersRepository();
         }
         bindUsernameAndImageURL(image) {
             if (image) {
-                const UsersRepository = require('./usersRepository');
-                let usersRepository = new UsersRepository();
-                let user = usersRepository.get(image.UserId);
+                let user = this.usersRepository.get(image.UserId);
                 let username = "unknown";
                 if (user)
                     username = user.Name;
