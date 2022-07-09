@@ -66,7 +66,7 @@ exports.list = (res) => {
                 }
             });
             res.writeHead(200, {'content-type':'text/html'});
-            res.end(content) + "</div>";
+            res.end(content + "</div>" );
         }
     });
 }
