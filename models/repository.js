@@ -6,12 +6,11 @@ const utilities = require('../utilities.js');
 const CollectionFilter = require('./collectionFilter.js');
 const RepositoryCachesManager = require("./repositoryCachesManager.js");
 const getRequestCache = require('../getRequestsCacheManager');
-const Model = require('./Model.js');
+
 ///////////////////////////////////////////////////////////////////////////
 // This class provide CRUD operations on JSON objects collection text file 
 // with the assumption that each object have an Id member.
 // If the objectsFile does not exist it will be created on demand.
-// Warning: no type and data validation is provided
 ///////////////////////////////////////////////////////////////////////////
 let repositoryEtags = {};
 

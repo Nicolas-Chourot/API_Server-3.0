@@ -24,7 +24,6 @@ module.exports =
                 bindedImage["Username"] = username;
                 bindedImage["Date"] = utilities.secondsToDateString(image["Created"]);
                 if (image["GUID"] != "") {
-                    // todo verify http or https
                     bindedImage["OriginalURL"] = host + ImageFilesRepository.getImageFileURL(image["GUID"]);
                     bindedImage["ThumbnailURL"] = host + ImageFilesRepository.getThumbnailFileURL(image["GUID"]);
                 } else {
