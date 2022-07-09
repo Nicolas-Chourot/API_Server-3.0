@@ -108,9 +108,10 @@ module.exports =
         createHttpContext(req, res) {
             httpContext.req = req;
             httpContext.res = res;
-            httpContext.host = req.headers["host"]
             httpContext.path = utilities.decomposePath(req.url);
             httpContext.response = new Response(res, req.url);
+            httpContext.secure = req.headers['x-forwarded-proto'] != undefined;
+            httpContext.host = (httpContext.secure ? "https://" : "http://") + req.headers["host"];
         }
         async handleHttpResquest(req, res) {
             this.createHttpContext(req, res);

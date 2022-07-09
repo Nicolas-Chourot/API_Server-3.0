@@ -14,7 +14,7 @@ class UsersRepository extends require('./repository') {
             let bindedUser = {...user};
             bindedUser.Password = "********";
             if (user["AvatarGUID"] != ""){
-                bindedUser["AvatarURL"] = "http://" + host + ImageFilesRepository.getImageFileURL(user["AvatarGUID"]);
+                bindedUser["AvatarURL"] = host + ImageFilesRepository.getImageFileURL(user["AvatarGUID"]);
             } else {
                 bindedUser["AvatarURL"] = "";
             }
