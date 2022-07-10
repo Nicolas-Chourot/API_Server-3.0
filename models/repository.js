@@ -15,7 +15,7 @@ const getRequestCache = require('../getRequestsCacheManager');
 let repositoryEtags = {};
 
 class Repository {
-    constructor(ModelClass, cached = false) {
+    constructor(ModelClass, cached = true) {
         this.objectsList = null;
         this.model = ModelClass;
         this.objectsName = ModelClass.getClassName() + 's';

@@ -1,26 +1,6 @@
 const utilities = require('./utilities.js');
 var clc = require("cli-color");
 
-const Response = require('./response.js');
-
-function isJSONContent(req, res) {
-    if (req.headers['content-type'] !== "application/json") {
-        let response = new Response(res);
-        response.unsupported();
-        return false;
-    }
-    return true;
-}
-function getJSONBody(req) {
-    return new Promise((resolve) => {
-        let body = [];
-        req.on('data', chunk => {
-            body.push(chunk);
-        }).on('end', () => {
-            resolve(JSON.parse(body));
-        });
-    })
-}
 function makeControllerName(modelName) {
     if (modelName != undefined)
         // by convention controller name -> NameController
@@ -28,29 +8,28 @@ function makeControllerName(modelName) {
     return undefined;
 }
 
-exports.Cached_EndPoint = function (req, res) {
+exports.Cached_EndPoint = function (HttpContext) {
     return new Promise(async (resolve) => {
-        if (req.method == 'GET') {
+        if (HttpContext.req.method == 'GET') {
             const Cache = require('./getRequestsCacheManager');
-            let cacheFound = Cache.find(req.url);
+            let cacheFound = Cache.find(HttpContext.req.url);
             if (cacheFound != null) {
-                res.writeHead(200, { 'content-type': 'application/json', 'ETag': cacheFound.ETag });
-                res.end(cacheFound.content);
+                HttpContext.response.JSON(cacheFound.content, cacheFound.ETag);
                 resolve(true);
             }
         }
         resolve(false);
     });
 }
-exports.TOKEN_EndPoint = function (req, res) {
+exports.TOKEN_EndPoint = function (HttpContext) {
     return new Promise(async (resolve) => {
-        let url = utilities.removeQueryString(req.url);
-        if (url == '/token' && req.method == "POST") {
+        let url = utilities.removeQueryString(HttpContext.req.url);
+        if (url == '/token'  && HttpContext.req.method == "POST") {
             try {
                 const AccountsController = require('./controllers/AccountsController');
-                let accountsController = new AccountsController(req, res);
-                if (isJSONContent(req, res)) {
-                    let JSONBody = await getJSONBody(req);
+                let accountsController = new AccountsController(HttpContext);
+                if (HttpContext.isJSONContent()) {
+                    let JSONBody = await HttpContext.getJSONBody();
                     accountsController.login(JSONBody);
                 }
                 resolve(true);
@@ -58,8 +37,7 @@ exports.TOKEN_EndPoint = function (req, res) {
                 console.log(clc.redBright('AccountsController is missing'));
                 console.log(clc.redBright('-----------------------------'));
                 console.log((clc.red(error)));
-                let response = new Response(res);
-                response.notFound();
+                HttpContext.response.notFound();
                 resolve(true);
             }
         }
@@ -70,23 +48,21 @@ exports.TOKEN_EndPoint = function (req, res) {
 }
 
 // {method, ControllerName, Action}
-exports.Registered_EndPoint = function (req, res) {
+exports.Registered_EndPoint = function (HttpContext) {
     return new Promise(async (resolve) => {
         const RouteRegister = require('./routeRegister');
-        let response = new Response(res);
-        let route = RouteRegister.find(req);
+        let route = RouteRegister.find(HttpContext.req);
         if (route != null) {
             try {
                 // dynamically import the targeted controller
                 // if it does not exist the catch section will be called
-                let controllerName = makeControllerName(route.modelName);
                 const Controller = require('./controllers/' + makeControllerName(route.modelName));
                 // instanciate the controller       
-                let controller = new Controller(req, res);
+                let controller = new Controller(HttpContext);
 
                 if (route.method === 'POST' || route.method === 'PUT') {
-                    if (isJSONContent(req, res)) {
-                        let JSONBody = await getJSONBody(req);
+                    if (HttpContext.isJSONContent()) {
+                        let JSONBody = await HttpContext.getJSONBody();
                         controller[route.actionName](JSONBody);
                     }
                 }
@@ -101,7 +77,7 @@ exports.Registered_EndPoint = function (req, res) {
                 console.log(clc.redBright('endpoint not found'));
                 console.log(clc.redBright('------------------'));
                 console.log((clc.red(error)));
-                response.notFound();
+                HttpContext.response.notFound();
                 resolve(true);
             }
         } else
@@ -128,38 +104,33 @@ exports.Registered_EndPoint = function (req, res) {
 // For ressource name RessourName you have to name the controller
 // RessourceNamesController that must inherit from Controller class
 /////////////////////////////////////////////////////////////////////
-exports.API_EndPoint = function (req, res) {
+exports.API_EndPoint = function (HttpContext) {
     return new Promise(async (resolve) => {
         let exit = false;
-        if (req.url == "/api") {
+        if (HttpContext.req.url == "/api") {
             const Endpoints = require('./endpoints');
-            Endpoints.list(res);
+            Endpoints.list(HttpContext.res);
             // request consumed
             resolve(true);
             exit = true;
         }
 
         if (!exit) {
-            let path = utilities.decomposePath(req.url);
-
-            if (!path.isAPI) {
+            if (!HttpContext.path.isAPI) {
                 resolve(false);
             } else {
 
-                let controllerName = makeControllerName(path.model);
-                let id = path.id;
+                let controllerName = makeControllerName(HttpContext.path.model);
+                let id = HttpContext.path.id;
 
                 if (controllerName != undefined) {
-                    let response = new Response(res);
                     try {
                         // dynamically import the targeted controller
                         // if the controllerName does not exist the catch section will be called
                         const Controller = require('./controllers/' + controllerName);
                         // instanciate the controller       
-                        let controller = new Controller(req, res, path.params);
-
-
-                        switch (req.method) {
+                        let controller = new Controller(HttpContext);
+                        switch (HttpContext.req.method) {
                             case 'HEAD':
                                 controller.head();
                                 resolve(true);
@@ -169,15 +140,15 @@ exports.API_EndPoint = function (req, res) {
                                 resolve(true);
                                 break;
                             case 'POST':
-                                if (isJSONContent(req, res)) {
-                                    let JSONBody = await getJSONBody(req);
+                                if (HttpContext.isJSONContent()) {
+                                    let JSONBody = await HttpContext.getJSONBody();
                                     controller.post(JSONBody);
                                 }
                                 resolve(true);
                                 break;
                             case 'PUT':
-                                if (isJSONContent(req, res)) {
-                                    let JSONBody = await getJSONBody(req);
+                                if (HttpContext.isJSONContent()) {
+                                    let JSONBody = await HttpContext.getJSONBody();
                                     controller.put(JSONBody);
                                 }
                                 resolve(true);
@@ -187,7 +158,7 @@ exports.API_EndPoint = function (req, res) {
                                 resolve(true);
                                 break;
                             default:
-                                response.notImplemented();
+                                HttpContext.response.notImplemented();
                                 resolve(true);
                                 break;
                         }
@@ -198,7 +169,7 @@ exports.API_EndPoint = function (req, res) {
                         console.log(clc.redBright('endpoint not found'));
                         console.log(clc.redBright('------------------'));
                         console.log((clc.red(error)));
-                        response.notFound();
+                        HttpContext.response.notFound();
                         resolve(true);
                     }
                 } else {

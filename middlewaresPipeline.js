@@ -8,9 +8,9 @@ module.exports =
             this.middlewares.push(middleware);
         }
 
-        async handleHttpRequest(req, res) {
+        async handleHttpRequest(HttpContext) {
             for (let middleware of this.middlewares) {
-                if (await(middleware(req, res))) return true;
+                if (await(middleware(HttpContext))) return true;
             }
             return false;
         }

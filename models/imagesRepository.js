@@ -4,7 +4,7 @@
 const ImageFilesRepository = require('./imageFilesRepository.js');
 const ImageModel = require('./image.js');
 const utilities = require("../utilities");
-var host = require('../APIServer').getHttpContext().host;
+const HttpContext = require('../httpContext').get();
 
 module.exports =
     class ImagesRepository extends require('./repository') {
@@ -24,8 +24,8 @@ module.exports =
                 bindedImage["Username"] = username;
                 bindedImage["Date"] = utilities.secondsToDateString(image["Created"]);
                 if (image["GUID"] != "") {
-                    bindedImage["OriginalURL"] = host + ImageFilesRepository.getImageFileURL(image["GUID"]);
-                    bindedImage["ThumbnailURL"] = host + ImageFilesRepository.getThumbnailFileURL(image["GUID"]);
+                    bindedImage["OriginalURL"] = HttpContext.host + ImageFilesRepository.getImageFileURL(image["GUID"]);
+                    bindedImage["ThumbnailURL"] = HttpContext.host + ImageFilesRepository.getThumbnailFileURL(image["GUID"]);
                 } else {
                     bindedImage["OriginalURL"] = "";
                     bindedImage["ThumbnailURL"] = "";

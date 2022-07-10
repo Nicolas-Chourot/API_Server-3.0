@@ -2,14 +2,11 @@ const usersRepository = require('../models/usersRepository');
 const ImagesRepository = require('../models/imagesRepository');
 const TokenManager = require('../tokenManager');
 const utilities = require("../utilities");
-const User = require('../models/user');
 
 module.exports =
     class AccountsController extends require('./Controller') {
-        constructor(req, res) {
-            super(req, res);
-            this.repository = new usersRepository();
-            this.model = new User();
+        constructor(HttpContext) {
+            super(HttpContext, new usersRepository());
         }
         // list of users with masked password
         index(id) {
@@ -18,7 +15,7 @@ module.exports =
                 if (user != null) {
                     let userClone = { ...user };
                     userClone.Password = "********";
-                    this.response.JSON(userClone);
+                    this.HttpContext.response.JSON(userClone);
                 }
             }
             else {
@@ -27,7 +24,7 @@ module.exports =
                 for (let user of usersClone) {
                     user.Password = "********";
                 }
-                this.response.JSON(usersClone);
+                this.HttpContext.response.JSON(usersClone);
             }
         }
         // POST: /token body payload[{"Email": "...", "Password": "...", "grant-type":"password"}]
@@ -37,19 +34,19 @@ module.exports =
             if (user != null) {
                 if (user.Password == loginInfo.Password) {
                     let newToken = TokenManager.create(user);
-                    this.response.JSON(newToken);
+                    this.HttpContext.response.JSON(newToken);
                 } else
-                    this.response.badRequest();
+                    this.HttpContext.response.badRequest();
             } else
-                this.response.badRequest();
+                this.HttpContext.response.badRequest();
         }
         logout(user) {
             if (this.requestActionAuthorized()) {
                 TokenManager.logout(user.Id);
-                this.response.accepted();
+                this.HttpContext.response.accepted();
             }
             else
-                this.response.unAuthorized();
+                this.HttpContext.response.unAuthorized();
         }
         // POST: account/register body payload[{"Id": 0, "Name": "...", "Email": "...", "Password": "..."}]
         register(user) {
@@ -59,19 +56,23 @@ module.exports =
                 if (!newUser.conflict) {
                     // mask password in the json object response
                     newUser.Password = "********";
-                    this.response.created(newUser);
+                    this.HttpContext.response.created(newUser);
                 } else
-                    this.response.conflict();
+                    this.HttpContext.response.conflict();
             } else
-                this.response.unprocessable();
+                this.HttpContext.response.unprocessable();
         }
+        // POST:account/modify body payload[{"Id": 0, "Name": "...", "Email": "...", "Password": "..."}]
         modify(user) {
             user.Created = utilities.nowInSeconds();
-            this.put(user);
-            let imagesRepository = new ImagesRepository();
-            imagesRepository.newETag();
+            let foundedUser = this.repository.findByField("Id", user.Id);
+            if (user.Password == '') {
+                user.Password = foundedUser.Password;
+            }
+            super.put(user);
         }
-        remove(id){
+        // GET:account/remove/id
+        remove(id) { // warning! this is not an API endpoint
             super.remove(id);
         }
     }

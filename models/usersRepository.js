@@ -2,7 +2,7 @@ const ImageFilesRepository = require('./imageFilesRepository.js');
 const UserModel = require('./user.js');
 const Cache = require('../getRequestsCacheManager');
 const utilities = require("../utilities");
-var host = require('../APIServer').getHttpContext().host;
+const HttpContext = require('../httpContext').get();
 
 module.exports = 
 class UsersRepository extends require('./repository') {
@@ -14,7 +14,7 @@ class UsersRepository extends require('./repository') {
             let bindedUser = {...user};
             bindedUser.Password = "********";
             if (user["AvatarGUID"] != ""){
-                bindedUser["AvatarURL"] = host + ImageFilesRepository.getImageFileURL(user["AvatarGUID"]);
+                bindedUser["AvatarURL"] = HttpContext.host + ImageFilesRepository.getImageFileURL(user["AvatarGUID"]);
             } else {
                 bindedUser["AvatarURL"] = "";
             }

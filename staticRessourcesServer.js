@@ -4,6 +4,7 @@ const mimes = require('./mimes.json');
 let wwwroot = 'wwwroot';
 let defaultRessource = 'index.html';
 
+
 function requestedStaticRessource(url) {
     let ressourceName = url === '/' ? defaultRessource : url;
     return path.join(__dirname, wwwroot, ressourceName);
@@ -17,21 +18,20 @@ function extToContentType(filePath) {
     return 'text/html';
 }
 
-exports.sendRequestedRessource = (req, res) => {
+exports.sendRequestedRessource = (HttpContext) => {
     return new Promise(async (resolve) => {
-        let filePath = requestedStaticRessource(req.url);
+        let filePath = requestedStaticRessource(HttpContext.req.url);
         let contentType = extToContentType(filePath);
         try {
             let content = fs.readFileSync(filePath);
-            res.writeHead(200, { 'Content-Type': contentType });
-            res.end(content);
+            HttpContext.response.content(contentType, content);
             resolve(true);
         } catch (error) {
             if (error.code === 'ENOENT') {
                 resolve(false);
             } else {
-                res.writeHead(500);
-                res.end(`Server error: ${err.code}`);
+                HttpContext.response.res.writeHead(500);
+                HttpContext.response.end(`Server error: ${err.code}`);
                 resolve(true);
             }
         }

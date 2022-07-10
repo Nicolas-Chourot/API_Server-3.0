@@ -1,4 +1,3 @@
-const Response = require('../response');
 const TokenManager = require('../tokenManager');
 /////////////////////////////////////////////////////////////////////
 // Important note about controllers:
@@ -9,25 +8,19 @@ const TokenManager = require('../tokenManager');
 /////////////////////////////////////////////////////////////////////
 module.exports =
     class Controller {
-        constructor(req, res, params) {
-            if (req != null && res != null) {
-                this.req = req;
-                this.res = res;
-                this.response = new Response(res, this.req.url);
-                this.params = params;
-                // if true, will require a valid bearer token from request header
-                this.needReadAuthorization = false;
-                this.needWriteAuthorization = true;
-                this.repository = null;
-                this.model = null;
-            }
+        constructor(HttpContext, repository, needReadAuthorization = false, needWriteAuthorization = true) {
+            // if true, will require a valid bearer token from request header
+            this.needReadAuthorization = needReadAuthorization;
+            this.needWriteAuthorization = needWriteAuthorization;
+            this.repository = repository;
+            this.HttpContext = HttpContext;
         }
         readAuthorization() {
             if (this.needReadAuthorization) {
-                if (TokenManager.requestAuthorized(this.req))
+                if (TokenManager.requestAuthorized(this.HttpContext.req))
                     return true;
                 else {
-                    this.response.unAuthorized();
+                    this.HttpContext.response.unAuthorized();
                     return false;
                 }
             }
@@ -35,10 +28,10 @@ module.exports =
         }
         writeAuthorization() {
             if (this.needWriteAuthorization) {
-                if (TokenManager.requestAuthorized(this.req))
+                if (TokenManager.requestAuthorized(this.HttpContext.req))
                     return true;
                 else {
-                    this.response.unAuthorized();
+                    this.HttpContext.response.unAuthorized();
                     return false;
                 }
             }
@@ -46,68 +39,67 @@ module.exports =
         }
 
         requestActionAuthorized() {
-            return TokenManager.requestAuthorized(this.req);
+            return TokenManager.requestAuthorized(this.HttpContext.req);
         }
         queryStringParamsList() {
             let content = "<div style=font-family:arial>";
             content += "<h4>List of parameters in query strings:</h4>";
-            content += "<h4>? sort=key <br> return all words sorted by key values (word)";
-            content += "<h4>? sort=key,desc <br> return all words sorted by descending key values";
-            content += "<h4>? key=value <br> return the word with key value = value";
-            content += "<h4>? key=value* <br> return the word with key value that start with value";
-            content += "<h4>? key=*value* <br> return the word with key value that contains value";
-            content += "<h4>? key=*value <br> return the word with key value end with value";
-            content += "<h4>page?limit=int&offset=int <br> return limit words of page offset";
+            content += "<h4>? sort=key <br> return all words sorted by key values (word)</h4>";
+            content += "<h4>? sort=key,desc <br> return all words sorted by descending key values</h4>";
+            content += "<h4>? key=value <br> return the word with key value = value</h4>";
+            content += "<h4>? key=value* <br> return the word with key value that start with value</h4>";
+            content += "<h4>? key=*value* <br> return the word with key value that contains value</h4>";
+            content += "<h4>? key=*value <br> return the word with key value end with value</h4>";
+            content += "<h4>page?limit=int&offset=int <br> return limit words of page offset</h4>";
             content += "</div>";
             return content;
         }
         queryStringHelp() {
             // expose all the possible query strings
-            this.res.writeHead(200, { 'content-type': 'text/html' });
-            this.res.end(this.queryStringParamsList());
+            this.HttpContext.response.HTML(this.queryStringParamsList());
         }
         paramsError(params, message) {
             if (params) {
                 params["error"] = message;
-                this.response.JSON(params);
+                this.HttpContext.response.JSON(params);
             } else {
-                this.response.JSON(message);
+                this.HttpContext.response.JSON(message);
             }
             return false;
         }
         head() {
             if (this.repository != null) {
-                this.response.JSON(null, this.repository.ETag);
+                this.HttpContext.response.JSON(null, this.repository.ETag);
             } else
-                this.response.notImplemented();
+                this.HttpContext.response.notImplemented();
         }
 
         get(id) {
             if (this.repository != null) {
                 if (this.readAuthorization()) {
-                    if (this.params === null) {
+                    if (this.HttpContext.params === null) {
                         if (!isNaN(id)) {
                             let data = this.repository.get(id);
                             if (data != null)
-                                this.response.JSON(data);
+                                this.HttpContext.response.JSON(data);
                             else
-                                this.response.notFound();
+                                this.HttpContext.response.notFound();
                         }
                         else
-                            this.response.JSON(this.repository.getAll(),
+                            this.HttpContext.response.JSON(this.repository.getAll(),
                                 this.repository.ETag);
                     }
                     else {
-                        if (Object.keys(this.params).length === 0) /* ? only */ {
+                        if (Object.keys(this.HttpContext.params).length === 0) /* ? only */ {
                             this.queryStringHelp();
                         } else {
-                            this.response.JSON(this.repository.getAll(this.params), this.repository.ETag);
+                            this.HttpContext.response.JSON(this.repository.getAll(this.HttpContext.params), this.repository.ETag);
                         }
                     }
                 } else
-                    this.response.unAuthorized();
+                    this.HttpContext.response.unAuthorized();
             } else
-                this.response.notImplemented();
+                this.HttpContext.response.notImplemented();
         }
         post(data) {
             if (this.repository != null) {
@@ -115,45 +107,45 @@ module.exports =
                     data = this.repository.add(data);
                     if (data) {
                         if (data.conflict)
-                            this.response.conflict();
+                            this.HttpContext.response.conflict();
                         else
-                            this.response.created(data);
+                            this.HttpContext.response.created(data);
                     } else
-                        this.response.unprocessable();
+                        this.HttpContext.response.unprocessable();
                 } else
-                    this.response.unAuthorized();
+                    this.HttpContext.response.unAuthorized();
             } else
-                this.response.notImplemented();
+                this.HttpContext.response.notImplemented();
         }
         put(data) {
             if (this.repository != null) {
                 if (this.writeAuthorization()) {
                     let result = this.repository.update(data);
                     if (result == "ok")
-                        this.response.ok();
+                        this.HttpContext.response.ok();
                     else
                         if (result == "conflict")
-                            this.response.conflict();
+                            this.HttpContext.response.conflict();
                         else
                             if (result == "not found")
-                                this.response.notFound();
+                                this.HttpContext.response.notFound();
                             else // invalid
-                                this.response.unprocessable();
+                                this.HttpContext.response.unprocessable();
                 } else
-                    this.response.unAuthorized();
+                    this.HttpContext.response.unAuthorized();
             } else
-                this.response.notImplemented();
+                this.HttpContext.response.notImplemented();
         }
         remove(id) {
             if (this.repository != null) {
                 if (this.writeAuthorization()) {
                     if (this.repository.remove(id))
-                        this.response.accepted();
+                        this.HttpContext.response.accepted();
                     else
-                        this.response.notFound();
+                        this.HttpContext.response.notFound();
                 } else
-                    this.response.unAuthorized();
+                    this.HttpContext.response.unAuthorized();
             } else
-                this.response.notImplemented();
+                this.HttpContext.response.notImplemented();
         }
     }

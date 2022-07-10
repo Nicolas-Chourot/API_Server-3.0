@@ -27,13 +27,13 @@ function findPrime(n){
 
 module.exports = 
 class MathsController extends require('./Controller') {
-    constructor(req, res, params) {
-        super(req, res, params);
+    constructor(HttpContext) {
+        super(HttpContext);
     }
 
     error(params, message){
         params["error"] = message;
-        this.response.JSON(params);
+        this.HttpContext.response.JSON(params);
         return false;
     }
 
@@ -41,7 +41,7 @@ class MathsController extends require('./Controller') {
         if (value === Infinity) value = "Infinity";
         if (isNaN(value)) value = "NaN";
         params["value"] = value;
-        this.response.JSON(params);
+        this.HttpContext.response.JSON(params);
     }
     
     checkParams(params){
@@ -145,8 +145,7 @@ class MathsController extends require('./Controller') {
         content += "<h4>? op = ! & n = integer <br>return {\"op\":\"%\",\"n\":integer, \"value\": n!} </h4>";
         content += "<h4>? op = p & n = integer <br>return {\"op\":\"p\",\"n\":integer, \"value\": true if n is a prime number} </h4>";
         content += "<h4>? op = np & n = integer <br>return {\"op\":\"n\",\"n\":integer, \"value\": nth prime number} </h4>";
-        this.res.writeHead(200, {'content-type':'text/html'});
-        this.res.end(content) + "</div>";
+        this.HttpContext.response.HTML(content + "</div>");
     }
     
     get(){

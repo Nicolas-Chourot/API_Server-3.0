@@ -1,7 +1,5 @@
 var clc = require("cli-color");
-const utilities = require('./utilities.js');
-const Response = require('./response');
-let httpContext = {};
+const HttpContext = require('./httpContext');
 
 module.exports =
     class APIServer {
@@ -13,9 +11,7 @@ module.exports =
             this.accountsRouteConfig();
             this.httpServer = require('http').createServer(async (req, res) => { this.handleHttpResquest(req, res) });
         }
-        static getHttpContext() {
-            return httpContext;
-        }
+
         static accessControlConfig(res) {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', '*');
@@ -30,23 +26,19 @@ module.exports =
             RouteRegister.add('PUT', 'accounts', 'modify');
             RouteRegister.add('DELETE', 'accounts', 'remove');
         }
-        static CORS_Prefligth(req, res) {
-            APIServer.accessControlConfig(res);
+        static CORS_Prefligth(HttpContext) {
+            APIServer.accessControlConfig(HttpContext.res);
             return new Promise(async (resolve) => {
-                if (req.method === 'OPTIONS') {
+                if (HttpContext.req.method === 'OPTIONS') {
                     console.log('CORS preflight verifications');
-                    res.end();
+                    HttpContext.response.end();
                     resolve(true);
                 }
                 resolve(false);
             });
         }
-        responseNotFound(res) {
-            return new Promise(async (resolve) => {
-                res.writeHead(404, { 'content-type': 'text/plain' });
-                res.end();
-                resolve(true);
-            });
+        responseNotFound(HttpContext) {
+            HttpContext.response.responseNotFound();
         }
         initMiddlewaresPipeline() {
             const staticResourceServer = require('./staticRessourcesServer');
@@ -105,19 +97,11 @@ module.exports =
                     "Heap size:", Math.round(used.heapTotal / 1024 / 1024 * 100) / 100, "Mb |",
                     "Used size:", Math.round(used.heapUsed / 1024 / 1024 * 100) / 100, "Mb"));
         }
-        createHttpContext(req, res) {
-            httpContext.req = req;
-            httpContext.res = res;
-            httpContext.path = utilities.decomposePath(req.url);
-            httpContext.response = new Response(res, req.url);
-            httpContext.secure = req.headers['x-forwarded-proto'] != undefined;
-            httpContext.host = (httpContext.secure ? "https://" : "http://") + req.headers["host"];
-        }
         async handleHttpResquest(req, res) {
-            this.createHttpContext(req, res);
+            let httpContext = new HttpContext(req, res);
             this.showRequestInfo(req);
-            if (!(await this.middlewaresPipeline.handleHttpRequest(req, res)))
-                await this.responseNotFound(res);
+            if (!(await this.middlewaresPipeline.handleHttpRequest(httpContext)))
+                HttpContext.response.responseNotFound();
             this.showResponseInfo(req);
         }
         startupMessage() {
