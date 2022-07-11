@@ -70,6 +70,8 @@ module.exports =
                 user.Password = foundedUser.Password;
             }
             super.put(user);
+            let imagesRepository = new ImagesRepository();
+            imagesRepository.newETag();
         }
         // GET:account/remove/id
         remove(id) { // warning! this is not an API endpoint

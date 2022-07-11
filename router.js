@@ -14,7 +14,7 @@ exports.Cached_EndPoint = function (HttpContext) {
             const Cache = require('./getRequestsCacheManager');
             let cacheFound = Cache.find(HttpContext.req.url);
             if (cacheFound != null) {
-                HttpContext.response.JSON(cacheFound.content, cacheFound.ETag);
+                HttpContext.response.JSON(cacheFound.content, cacheFound.ETag, true);
                 resolve(true);
             }
         }
@@ -24,19 +24,18 @@ exports.Cached_EndPoint = function (HttpContext) {
 exports.TOKEN_EndPoint = function (HttpContext) {
     return new Promise(async (resolve) => {
         let url = utilities.removeQueryString(HttpContext.req.url);
-        if (url == '/token'  && HttpContext.req.method == "POST") {
+        if (url == '/token' && HttpContext.req.method == "POST") {
             try {
                 const AccountsController = require('./controllers/AccountsController');
                 let accountsController = new AccountsController(HttpContext);
-                if (HttpContext.isJSONContent()) {
-                    let JSONBody = await HttpContext.getJSONBody();
-                    accountsController.login(JSONBody);
-                }
+                if (HttpContext.payload)
+                    accountsController.login(HttpContext.payload);
+                else
+                    HttpContext.response.unsupported();
                 resolve(true);
             } catch (error) {
-                console.log(clc.redBright('AccountsController is missing'));
-                console.log(clc.redBright('-----------------------------'));
-                console.log((clc.red(error)));
+                console.log((clc.red("Token_EndPoint Error message: \n",error.message)));
+                console.log((clc.red("Stack: \n",error.stack)));
                 HttpContext.response.notFound();
                 resolve(true);
             }
@@ -61,35 +60,31 @@ exports.Registered_EndPoint = function (HttpContext) {
                 let controller = new Controller(HttpContext);
 
                 if (route.method === 'POST' || route.method === 'PUT') {
-                    if (HttpContext.isJSONContent()) {
-                        let JSONBody = await HttpContext.getJSONBody();
-                        controller[route.actionName](JSONBody);
-                    }
+                    if (HttpContext.payload)
+                        controller[route.actionName](HttpContext.payload);
+                    else
+                        HttpContext.response.unsupported();
                 }
                 else {
                     controller[route.actionName](route.id);
                 }
                 resolve(true);
             } catch (error) {
-                // catch likely called because of missing controller class
-                // i.e. require('./' + controllerName) failed
-                // but also any unhandled error...
-                console.log(clc.redBright('endpoint not found'));
-                console.log(clc.redBright('------------------'));
-                console.log((clc.red(error)));
+                console.log((clc.red("Registered_EndPoint Error message: \n",error.message)));
+                console.log((clc.red("Stack: \n",error.stack)));
                 HttpContext.response.notFound();
                 resolve(true);
             }
         } else
-        // not an registered endpoint
-        // request not consumed
-        // must be handled by another middleware
-        resolve(false);
+            // not an registered endpoint
+            // request not consumed
+            // must be handled by another middleware
+            resolve(false);
     });
 }
 
 //////////////////////////////////////////////////////////////////////
-// dispatch_API_EndPoint middleware
+// API_EndPoint middleware
 // parse the req.url that must have the following format:
 // /api/{ressource name} or
 // /api/{ressource name}/{id}
@@ -114,7 +109,6 @@ exports.API_EndPoint = function (HttpContext) {
             resolve(true);
             exit = true;
         }
-
         if (!exit) {
             if (!HttpContext.path.isAPI) {
                 resolve(false);
@@ -140,17 +134,17 @@ exports.API_EndPoint = function (HttpContext) {
                                 resolve(true);
                                 break;
                             case 'POST':
-                                if (HttpContext.isJSONContent()) {
-                                    let JSONBody = await HttpContext.getJSONBody();
-                                    controller.post(JSONBody);
-                                }
+                                if (HttpContext.payload)
+                                    controller.post(HttpContext.payload);
+                                else
+                                    HttpContext.response.unsupported();
                                 resolve(true);
                                 break;
                             case 'PUT':
-                                if (HttpContext.isJSONContent()) {
-                                    let JSONBody = await HttpContext.getJSONBody();
-                                    controller.put(JSONBody);
-                                }
+                                if (HttpContext.payload)
+                                    controller.put(HttpContext.payload);
+                                else
+                                    HttpContext.response.unsupported();
                                 resolve(true);
                                 break;
                             case 'DELETE':
@@ -163,12 +157,8 @@ exports.API_EndPoint = function (HttpContext) {
                                 break;
                         }
                     } catch (error) {
-                        // catch likely called because of missing controller class
-                        // i.e. require('./' + controllerName) failed
-                        // but also any unhandled error...
-                        console.log(clc.redBright('endpoint not found'));
-                        console.log(clc.redBright('------------------'));
-                        console.log((clc.red(error)));
+                        console.log((clc.red("API_EndPoint Error message: \n",error.message)));
+                        console.log((clc.red("Stack: \n",error.stack)));
                         HttpContext.response.notFound();
                         resolve(true);
                     }

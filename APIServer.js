@@ -5,7 +5,7 @@ module.exports =
     class APIServer {
         constructor(port = process.env.PORT || 5000) {
             this.port = port;
-            this.Hide_HEAD_Request = false;
+            this.Hide_HEAD_Request = true;
             this.Hide_Request_Info = false;
             this.initMiddlewaresPipeline();
             this.accountsRouteConfig();
@@ -99,6 +99,9 @@ module.exports =
         }
         async handleHttpResquest(req, res) {
             let httpContext = new HttpContext(req, res);
+            await httpContext.getJSONPayload();
+            if (httpContext.payload)
+                console.log("Request payload ", httpContext.payload);
             this.showRequestInfo(req);
             if (!(await this.middlewaresPipeline.handleHttpRequest(httpContext)))
                 HttpContext.response.responseNotFound();

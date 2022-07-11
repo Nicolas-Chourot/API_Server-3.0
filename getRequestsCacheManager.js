@@ -6,7 +6,6 @@ let getRequestsCacheExpirationTime = serverVariables.get("main.getRequestscache.
 let getRequestsCache = [];
 
 class GetRequestsCacheManager {
-   
     static add(url, content, ETag = "") {
         if (url != "") {
             getRequestsCache.push({url, content, ETag, expireIn: utilities.nowInSeconds() + getRequestsCacheExpirationTime});
@@ -37,7 +36,8 @@ class GetRequestsCacheManager {
             let indexToDelete = [];
             let index = 0;
             for(let endpoint of getRequestsCache){
-                if (endpoint.url.indexOf(url) > -1) indexToDelete.push(index);
+                if (endpoint.url.indexOf(url.toLowerCase()) > -1) 
+                    indexToDelete.push(index);
                 index ++;
             }
             if (index > 0)

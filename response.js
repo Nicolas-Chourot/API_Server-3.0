@@ -4,15 +4,14 @@ const Cache = require('./getRequestsCacheManager');
 
 module.exports =
     class Response {
-        constructor(res, url = "") {
+        constructor(req, res) {
             this.res = res;
-            this.url = this.makeCacheableEndpoint(url);
-            this.urlBase = this.makeUrlBase(url);
+            this.endpoint = this.makeCacheableEndpoint(req.url);
+            this.urlBase = this.makeUrlBase(req.url);
         }
         makeCacheableEndpoint(url) {
             if (url != "") {
                 let path = utilities.decomposePath(url);
-                // todo manage page and params
                 if (path.isAPI && path.id == undefined)
                     return url;
             }
@@ -31,7 +30,7 @@ module.exports =
             this.end();
         }
         end(content = null) {
-            console.log(clc.bold(clc.green(`[${this.url}]response completed`)));
+            // console.log(clc.bold(clc.green(`[${this.url}]response completed`)));
             if (content)
                 this.res.end(content);
             else
@@ -52,28 +51,26 @@ module.exports =
             this.end(JSON.stringify(jsonObj));
             Cache.clear(this.urlBase);
         }
-        JSON(jsonObj, ETag = "") {
+        JSON(jsonObj, ETag = "", fromCache = false) {
+            if (ETag != "")
+                this.res.writeHead(200, { 'content-type': 'application/json', 'ETag': ETag });
+            else
+                this.res.writeHead(200, { 'content-type': 'application/json' });
             if (jsonObj != null) {
+                if (!fromCache)
+                    // dont cache it again
+                    Cache.add(this.endpoint, jsonObj, ETag);
                 let content = JSON.stringify(jsonObj);
-                Cache.add(this.url, content, ETag);
-                if (ETag != "")
-                    this.res.writeHead(200, { 'content-type': 'application/json', 'ETag': ETag });
-                else
-                    this.res.writeHead(200, { 'content-type': 'application/json' });
                 this.end(content);
             } else {
-                if (ETag != "")
-                    this.res.writeHead(204, { 'content-type': 'application/json', 'ETag': ETag });
-                else
-                    this.res.writeHead(204, { 'content-type': 'application/json' });
                 this.end();
             }
         }
-        HTML(content){
+        HTML(content) {
             this.content('text/html', content);
         }
         content(contentType, content) {
-            this.res.writeHead(200, { 'content-type': contentType});
+            this.res.writeHead(200, { 'content-type': contentType });
             this.end(content);
         }
         ETag(ETag) {
