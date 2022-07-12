@@ -37,7 +37,6 @@ module.exports =
             }
             return true;
         }
-
         requestActionAuthorized() {
             return TokenManager.requestAuthorized(this.HttpContext.req);
         }
@@ -73,7 +72,6 @@ module.exports =
             } else
                 this.HttpContext.response.notImplemented();
         }
-
         get(id) {
             if (this.repository != null) {
                 if (this.readAuthorization()) {

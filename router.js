@@ -7,7 +7,6 @@ function makeControllerName(modelName) {
         return utilities.capitalizeFirstLetter(modelName) + 'Controller';
     return undefined;
 }
-
 exports.Cached_EndPoint = function (HttpContext) {
     return new Promise(async (resolve) => {
         if (HttpContext.req.method == 'GET') {
@@ -45,7 +44,6 @@ exports.TOKEN_EndPoint = function (HttpContext) {
         resolve(false);
     });
 }
-
 // {method, ControllerName, Action}
 exports.Registered_EndPoint = function (HttpContext) {
     return new Promise(async (resolve) => {
@@ -82,7 +80,6 @@ exports.Registered_EndPoint = function (HttpContext) {
             resolve(false);
     });
 }
-
 //////////////////////////////////////////////////////////////////////
 // API_EndPoint middleware
 // parse the req.url that must have the following format:

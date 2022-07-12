@@ -174,14 +174,12 @@ class Repository {
         }
         return null;
     }
-
     removeByIndex(indexToDelete) {
         if (indexToDelete.length > 0) {
             utilities.deleteByIndex(this.objects(), indexToDelete);
             this.write();
         }
     }
-
     findByField(fieldName, value, excludedId = 0) {
         if (fieldName) {
             let index = 0;

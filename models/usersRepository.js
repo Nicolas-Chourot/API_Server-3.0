@@ -57,7 +57,6 @@ class UsersRepository extends require('./repository') {
         }
         return false;
     }
-    
     deleteAllUsersBookmarks(userId) {
         const BookmarksRepository = require('./bookmarksRepository.js');
         let bookmarksRepository = new BookmarksRepository(bookmarkModel, true);
@@ -86,7 +85,6 @@ class UsersRepository extends require('./repository') {
         imagesRepository.removeByIndex(indexToDelete);
         Cache.clear('images');
     }
-
     remove(id){
         let foundUser = super.get(id);
         if (foundUser) {

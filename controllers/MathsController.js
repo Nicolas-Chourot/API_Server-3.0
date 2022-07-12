@@ -4,7 +4,6 @@ function factorial(n){
     }
     return n*factorial(n-1);
 }
-
 function isPrime(value) {
     for(var i = 2; i < value; i++) {
         if(value % i === 0) {
@@ -13,7 +12,6 @@ function isPrime(value) {
     }
     return value > 1;
 }
-
 function findPrime(n){
     let primeNumer = 0;
     for ( let i=0; i < n; i++){
@@ -24,26 +22,22 @@ function findPrime(n){
     }
     return primeNumer;
 }
-
 module.exports = 
 class MathsController extends require('./Controller') {
     constructor(HttpContext) {
         super(HttpContext);
     }
-
     error(params, message){
         params["error"] = message;
         this.HttpContext.response.JSON(params);
         return false;
     }
-
     result(params, value){
         if (value === Infinity) value = "Infinity";
         if (isNaN(value)) value = "NaN";
         params["value"] = value;
         this.HttpContext.response.JSON(params);
     }
-    
     checkParams(params){
         if ('op' in params) {
             if (params.op === ' ')
@@ -103,7 +97,6 @@ class MathsController extends require('./Controller') {
         // all parameters are ok
         return true;
     }
-   
     doOperation(params){
         switch (params.op){
             case '+': // add operation
@@ -132,7 +125,6 @@ class MathsController extends require('./Controller') {
                 break;
         }
     }
-
     help() {
         // expose all the possible query strings
         let content = "<div style=font-family:arial>";
@@ -147,7 +139,6 @@ class MathsController extends require('./Controller') {
         content += "<h4>? op = np & n = integer <br>return {\"op\":\"n\",\"n\":integer, \"value\": nth prime number} </h4>";
         this.HttpContext.response.HTML(content + "</div>");
     }
-    
     get(){
         // if we have no parameter, expose the list of possible query strings
         if (Object.keys(this.params).length === 0) {

@@ -4,12 +4,10 @@ const mimes = require('./mimes.json');
 let wwwroot = 'wwwroot';
 let defaultRessource = 'index.html';
 
-
 function requestedStaticRessource(url) {
     let ressourceName = url === '/' ? defaultRessource : url;
     return path.join(__dirname, wwwroot, ressourceName);
 }
-
 function extToContentType(filePath) {
     let extension = path.extname(filePath).replace('.','');
     let contentType = mimes[extension];
@@ -17,7 +15,6 @@ function extToContentType(filePath) {
         return contentType;
     return 'text/html';
 }
-
 exports.sendRequestedRessource = (HttpContext) => {
     return new Promise(async (resolve) => {
         let filePath = requestedStaticRessource(HttpContext.req.url);

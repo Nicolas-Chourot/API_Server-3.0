@@ -9,9 +9,9 @@ module.exports =
             this.Hide_Request_Info = false;
             this.initMiddlewaresPipeline();
             this.accountsRouteConfig();
+            this.httpContext = null;
             this.httpServer = require('http').createServer(async (req, res) => { this.handleHttpResquest(req, res) });
         }
-
         static accessControlConfig(res) {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', '*');
@@ -56,25 +56,27 @@ module.exports =
             this.middlewaresPipeline.add(router.Registered_EndPoint);
             this.middlewaresPipeline.add(router.API_EndPoint);
         }
-        showRequestInfo(req) {
+        showRequestInfo() {
             let hide = this.Hide_Request_Info;
             if (!hide) {
                 if (this.Hide_HEAD_Request) {
-                    hide = req.method == "HEAD";
+                    hide = this.httpContext.req.method == "HEAD";
                 }
                 if (!hide) {
                     this.markRequestProcessStartTime();
                     let time = require('date-and-time').format(new Date(), 'YYYY MMMM DD - HH:mm:ss');
                     console.log(clc.green('<-------------------------', time, '-------------------------'));
-                    console.log(clc.bold(clc.green(`Request --> [${req.method}::${req.url}]`)));
+                    console.log(clc.bold(clc.green(`Request --> [${this.httpContext.req.method}::${this.httpContext.req.url}]`)));
+                    if (this.httpContext.payload)
+                        console.log("Request payload ", JSON.stringify(this.httpContext.payload).substring(0, 127) + "...");
                 }
             }
         }
-        showResponseInfo(req) {
+        showResponseInfo() {
             let hide = this.Hide_Request_Info;
             if (!hide) {
                 if (this.Hide_HEAD_Request) {
-                    hide = req.method == "HEAD";
+                    hide = this.httpContext.req.method == "HEAD";
                 }
             }
             if (!hide) {
@@ -98,14 +100,11 @@ module.exports =
                     "Used size:", Math.round(used.heapUsed / 1024 / 1024 * 100) / 100, "Mb"));
         }
         async handleHttpResquest(req, res) {
-            let httpContext = new HttpContext(req, res);
-            await httpContext.getJSONPayload();
-            if (httpContext.payload)
-                console.log("Request payload ", httpContext.payload);
-            this.showRequestInfo(req);
-            if (!(await this.middlewaresPipeline.handleHttpRequest(httpContext)))
-                HttpContext.response.responseNotFound();
-            this.showResponseInfo(req);
+            this.httpContext = await HttpContext.create(req, res);
+            this.showRequestInfo();
+            if (!(await this.middlewaresPipeline.handleHttpRequest(this.httpContext)))
+                this.httpContext.response.notFound();
+            this.showResponseInfo();
         }
         startupMessage() {
             console.log(clc.green("**********************************"));

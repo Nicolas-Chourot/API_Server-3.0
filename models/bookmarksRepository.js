@@ -7,7 +7,6 @@ module.exports =
             this.usersRepository =  new UsersRepository();
             this.setBindExtraDataMethod(this.resolveUserName);
         }
-
         resolveUserName(bookmark) {
             let user = this.usersRepository.get(bookmark.UserId);
             let username = "unknown";

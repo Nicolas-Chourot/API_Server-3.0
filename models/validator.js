@@ -21,7 +21,6 @@ module.exports =
             }
             return false;
         }
-
         test(objectInstance) {
             let oneIsWrong = false;
             this.fields.forEach(field => {
