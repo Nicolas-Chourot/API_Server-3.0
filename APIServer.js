@@ -37,9 +37,6 @@ module.exports =
                 resolve(false);
             });
         }
-        responseNotFound(HttpContext) {
-            HttpContext.response.responseNotFound();
-        }
         initMiddlewaresPipeline() {
             const staticResourceServer = require('./staticRessourcesServer');
             const MiddlewaresPipeline = require('./middlewaresPipeline');
@@ -67,6 +64,7 @@ module.exports =
                     let time = require('date-and-time').format(new Date(), 'YYYY MMMM DD - HH:mm:ss');
                     console.log(clc.green('<-------------------------', time, '-------------------------'));
                     console.log(clc.bold(clc.green(`Request --> [${this.httpContext.req.method}::${this.httpContext.req.url}]`)));
+                    console.log("Host ", this.httpContext.hostIp.substring(0,15), "::", this.httpContext.host);
                     if (this.httpContext.payload)
                         console.log("Request payload ", JSON.stringify(this.httpContext.payload).substring(0, 127) + "...");
                 }

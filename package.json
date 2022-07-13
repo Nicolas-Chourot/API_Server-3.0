@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "API Server 3.0",
   "main": "server.js",
+  "engines": { "node": "12.18.3" },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --max-old-space-size=6000 server.js"
