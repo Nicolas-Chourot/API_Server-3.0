@@ -9,7 +9,7 @@ function requestedStaticRessource(url) {
     return path.join(__dirname, wwwroot, ressourceName);
 }
 function extToContentType(filePath) {
-    let extension = path.extname(filePath).replace('.', '');
+    let extension = path.extname(filePath).replace('.','');
     let contentType = mimes[extension];
     if (contentType !== undefined)
         return contentType;
@@ -25,9 +25,7 @@ exports.sendRequestedRessource = (HttpContext) => {
             resolve(true);
         } catch (error) {
             if (error.code === 'ENOENT') {
-                let content = fs.readFileSync(path.join(__dirname, wwwroot, "404.html"));
-                HttpContext.response.content(contentType, content);
-                resolve(true);
+                resolve(false);
             } else {
                 HttpContext.response.res.writeHead(500);
                 HttpContext.response.end(`Server error: ${err.code}`);
