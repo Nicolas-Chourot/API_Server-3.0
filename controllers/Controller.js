@@ -8,7 +8,7 @@ const TokenManager = require('../tokenManager');
 /////////////////////////////////////////////////////////////////////
 module.exports =
     class Controller {
-        constructor(HttpContext, repository, needReadAuthorization = false, needWriteAuthorization = true) {
+        constructor(HttpContext, repository = null, needReadAuthorization = false, needWriteAuthorization = true) {
             // if true, will require a valid bearer token from request header
             this.needReadAuthorization = needReadAuthorization;
             this.needWriteAuthorization = needWriteAuthorization;

@@ -43,14 +43,15 @@ module.exports =
             this.middlewaresPipeline = new MiddlewaresPipeline();
 
             // common middlewares
-            this.middlewaresPipeline.add(staticResourceServer.sendRequestedRessource);
             this.middlewaresPipeline.add(APIServer.CORS_Prefligth);
+            this.middlewaresPipeline.add(staticResourceServer.sendRequestedRessource);
 
             // API middlewares
             const router = require('./router');
             this.middlewaresPipeline.add(router.Cached_EndPoint);
             this.middlewaresPipeline.add(router.TOKEN_EndPoint);
             this.middlewaresPipeline.add(router.Registered_EndPoint);
+            this.middlewaresPipeline.add(router.List_EndPoints);
             this.middlewaresPipeline.add(router.API_EndPoint);
         }
         showRequestInfo() {

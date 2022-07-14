@@ -1,12 +1,5 @@
-const utilities = require('./utilities.js');
 var clc = require("cli-color");
 
-function makeControllerName(modelName) {
-    if (modelName != undefined)
-        // by convention controller name -> NameController
-        return utilities.capitalizeFirstLetter(modelName) + 'Controller';
-    return undefined;
-}
 exports.Cached_EndPoint = function (HttpContext) {
     return new Promise(async (resolve) => {
         if (HttpContext.req.method == 'GET') {
@@ -22,8 +15,7 @@ exports.Cached_EndPoint = function (HttpContext) {
 }
 exports.TOKEN_EndPoint = function (HttpContext) {
     return new Promise(async (resolve) => {
-        let url = utilities.removeQueryString(HttpContext.req.url);
-        if (url == '/token' && HttpContext.req.method == "POST") {
+        if (HttpContext.req.url == '/token' && HttpContext.req.method == "POST") {
             try {
                 const AccountsController = require('./controllers/AccountsController');
                 let accountsController = new AccountsController(HttpContext);
@@ -33,8 +25,8 @@ exports.TOKEN_EndPoint = function (HttpContext) {
                     HttpContext.response.unsupported();
                 resolve(true);
             } catch (error) {
-                console.log((clc.red("Token_EndPoint Error message: \n",error.message)));
-                console.log((clc.red("Stack: \n",error.stack)));
+                console.log((clc.red("Token_EndPoint Error message: \n", error.message)));
+                console.log((clc.red("Stack: \n", error.stack)));
                 HttpContext.response.notFound();
                 resolve(true);
             }
@@ -53,7 +45,7 @@ exports.Registered_EndPoint = function (HttpContext) {
             try {
                 // dynamically import the targeted controller
                 // if it does not exist the catch section will be called
-                const Controller = require('./controllers/' + makeControllerName(route.modelName));
+                const Controller = require('./controllers/' + HttpContext.path.controllerName);
                 // instanciate the controller       
                 let controller = new Controller(HttpContext);
 
@@ -68,8 +60,8 @@ exports.Registered_EndPoint = function (HttpContext) {
                 }
                 resolve(true);
             } catch (error) {
-                console.log((clc.red("Registered_EndPoint Error message: \n",error.message)));
-                console.log((clc.red("Stack: \n",error.stack)));
+                console.log((clc.red("Registered_EndPoint Error message: \n", error.message)));
+                console.log((clc.red("Stack: \n", error.stack)));
                 HttpContext.response.notFound();
                 resolve(true);
             }
@@ -78,6 +70,17 @@ exports.Registered_EndPoint = function (HttpContext) {
             // request not consumed
             // must be handled by another middleware
             resolve(false);
+    });
+}
+exports.List_EndPoints = function (HttpContext) {
+    return new Promise(async (resolve) => {
+        if (HttpContext.req.url == "/api") {
+            const Endpoints = require('./endpoints');
+            Endpoints.list(HttpContext.res);
+            // request consumed
+            resolve(true);
+        }
+        resolve(false);
     });
 }
 //////////////////////////////////////////////////////////////////////
@@ -98,72 +101,62 @@ exports.Registered_EndPoint = function (HttpContext) {
 /////////////////////////////////////////////////////////////////////
 exports.API_EndPoint = function (HttpContext) {
     return new Promise(async (resolve) => {
-        let exit = false;
-        if (HttpContext.req.url == "/api") {
-            const Endpoints = require('./endpoints');
-            Endpoints.list(HttpContext.res);
-            // request consumed
-            resolve(true);
-            exit = true;
-        }
-        if (!exit) {
-            if (!HttpContext.path.isAPI) {
-                resolve(false);
-            } else {
+        if (!HttpContext.path.isAPI) {
+            resolve(false);
+        } else {
 
-                let controllerName = makeControllerName(HttpContext.path.model);
-                let id = HttpContext.path.id;
+            let controllerName = HttpContext.path.controllerName;
+            let id = HttpContext.path.id;
 
-                if (controllerName != undefined) {
-                    try {
-                        // dynamically import the targeted controller
-                        // if the controllerName does not exist the catch section will be called
-                        const Controller = require('./controllers/' + controllerName);
-                        // instanciate the controller       
-                        let controller = new Controller(HttpContext);
-                        switch (HttpContext.req.method) {
-                            case 'HEAD':
-                                controller.head();
-                                resolve(true);
-                                break;
-                            case 'GET':
-                                controller.get(id);
-                                resolve(true);
-                                break;
-                            case 'POST':
-                                if (HttpContext.payload)
-                                    controller.post(HttpContext.payload);
-                                else
-                                    HttpContext.response.unsupported();
-                                resolve(true);
-                                break;
-                            case 'PUT':
-                                if (HttpContext.payload)
-                                    controller.put(HttpContext.payload);
-                                else
-                                    HttpContext.response.unsupported();
-                                resolve(true);
-                                break;
-                            case 'DELETE':
-                                controller.remove(id);
-                                resolve(true);
-                                break;
-                            default:
-                                HttpContext.response.notImplemented();
-                                resolve(true);
-                                break;
-                        }
-                    } catch (error) {
-                        console.log((clc.red("API_EndPoint Error message: \n",error.message)));
-                        console.log((clc.red("Stack: \n",error.stack)));
-                        HttpContext.response.notFound();
-                        resolve(true);
+            if (controllerName != undefined) {
+                try {
+                    // dynamically import the targeted controller
+                    // if the controllerName does not exist the catch section will be called
+                    const Controller = require('./controllers/' + controllerName);
+                    // instanciate the controller       
+                    let controller = new Controller(HttpContext);
+                    switch (HttpContext.req.method) {
+                        case 'HEAD':
+                            controller.head();
+                            resolve(true);
+                            break;
+                        case 'GET':
+                            controller.get(id);
+                            resolve(true);
+                            break;
+                        case 'POST':
+                            if (HttpContext.payload)
+                                controller.post(HttpContext.payload);
+                            else
+                                HttpContext.response.unsupported();
+                            resolve(true);
+                            break;
+                        case 'PUT':
+                            if (HttpContext.payload)
+                                controller.put(HttpContext.payload);
+                            else
+                                HttpContext.response.unsupported();
+                            resolve(true);
+                            break;
+                        case 'DELETE':
+                            controller.remove(id);
+                            resolve(true);
+                            break;
+                        default:
+                            HttpContext.response.notImplemented();
+                            resolve(true);
+                            break;
                     }
-                } else {
-                    // not an API endpoint
-                    // must be handled by another middleware
-                    resolve(false);
+                } catch (error) {
+                    console.log((clc.red("API_EndPoint Error message: \n", error.message)));
+                    console.log((clc.red("Stack: \n", error.stack)));
+                    HttpContext.response.notFound();
+                    resolve(true);
                 }
+            } else {
+                // not an API endpoint
+                // must be handled by another middleware
+                resolve(false);
             }
         }
     });

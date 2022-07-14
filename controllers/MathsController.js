@@ -26,6 +26,7 @@ module.exports =
 class MathsController extends require('./Controller') {
     constructor(HttpContext) {
         super(HttpContext);
+        this.params = HttpContext.params;
     }
     error(params, message){
         params["error"] = message;

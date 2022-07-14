@@ -1,5 +1,6 @@
 const queryStringParser = require('query-string');
-exports.capitalizeFirstLetter = (s) => {
+exports.capitalizeFirstLetter = capitalizeFirstLetter;
+function capitalizeFirstLetter(s) {
     if (typeof s !== 'string') return ''
     return s.charAt(0).toUpperCase() + s.slice(1);   
 }
@@ -38,6 +39,7 @@ function secondsToDateString(dateInSeconds, localizationId = 'fr-FR') {
 exports.decomposePath = (url) => {
     let isAPI = false;
     let model = undefined;
+    let controllerName = undefined;
     let action = undefined;
     let id = undefined;
     let params = null;
@@ -54,8 +56,10 @@ exports.decomposePath = (url) => {
 
     let urlParts = path.split("/");
 
-    if (urlParts[1] != undefined)
+    if (urlParts[1] != undefined) {
         model = urlParts[1];
+        controllerName = capitalizeFirstLetter(model) + 'Controller';
+    }
 
     if (!isAPI){
         if (urlParts[2] != undefined &&  urlParts[2] !='')
@@ -71,5 +75,5 @@ exports.decomposePath = (url) => {
             id = parseInt(urlParts[2]);
         } 
     }
-    return { isAPI, model, action, id, queryString , params};
+    return { isAPI, model, controllerName, action, id, queryString , params};
 }
