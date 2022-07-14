@@ -40,7 +40,7 @@ exports.TOKEN_EndPoint = function (HttpContext) {
 exports.Registered_EndPoint = function (HttpContext) {
     return new Promise(async (resolve) => {
         const RouteRegister = require('./routeRegister');
-        let route = RouteRegister.find(HttpContext.req);
+        let route = RouteRegister.find(HttpContext);
         if (route != null) {
             try {
                 // dynamically import the targeted controller
@@ -76,7 +76,7 @@ exports.List_EndPoints = function (HttpContext) {
     return new Promise(async (resolve) => {
         if (HttpContext.req.url == "/api") {
             const Endpoints = require('./endpoints');
-            Endpoints.list(HttpContext.res);
+            Endpoints.list(HttpContext);
             // request consumed
             resolve(true);
         }

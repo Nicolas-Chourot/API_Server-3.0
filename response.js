@@ -1,36 +1,40 @@
-var clc = require("cli-color");
-const utilities = require('./utilities');
 const Cache = require('./getRequestsCacheManager');
 
 module.exports =
     class Response {
-        constructor(req, res) {
-            this.res = res;
-            this.endpoint = this.makeCacheableEndpoint(req.url);
-            this.urlBase = this.makeUrlBase(req.url);
-        }
-        makeCacheableEndpoint(url) {
-            if (url != "") {
-                let path = utilities.decomposePath(url);
-                if (path.isAPI && path.id == undefined)
-                    return url;
+        constructor(HttpContext, cacheableResponse = true) {
+            this.HttpContext = HttpContext;
+            this.res = HttpContext.res;
+            if (cacheableResponse) {
+                this.APIendpoint_url = this.makeCacheableAPIendpoint_url();
+                this.APIendpoint_urlBase = this.makeAPIendpoint_urlBase();
+            } else {
+                this.APIendpoint_url = "";
+                this.APIendpoint_urlBase = "";
             }
+        }
+        makeCacheableAPIendpoint_url() {
+            // do not cache api/models/id!=undefined
+            if (this.HttpContext.path.isAPI && this.HttpContext.path.id == undefined)
+                return this.HttpContext.req.url;
             // not cacheable
             return "";
         }
-        makeUrlBase(url) {
-            if (url != "") {
-                let path = utilities.decomposePath(url);
-                return (path.isAPI ? "/api" : "") + "/" + path.model;
-            }
-            return "";
+        makeAPIendpoint_urlBase() {
+            // defined querystring less api/models url
+            return (this.HttpContext.path.isAPI ? "/api" : "") + "/" + this.HttpContext.path.model;
+        }
+        clearCache() {
+            Cache.clear(this.APIendpoint_urlBase);
+        }
+        AddInCache(jsonObj, ETag) {
+            Cache.add(this.APIendpoint_url, jsonObj, ETag);
         }
         status(number) {
             this.res.writeHead(number, { 'content-type': 'text/plain' });
             this.end();
         }
         end(content = null) {
-            // console.log(clc.bold(clc.green(`[${this.url}]response completed`)));
             if (content)
                 this.res.end(content);
             else
@@ -39,17 +43,17 @@ module.exports =
         ok() {
             // ok status
             this.status(200);
-            Cache.clear(this.urlBase);
+            this.clearCache();
         }
         accepted() {
             // accepted status
             this.status(202);
-            Cache.clear(this.urlBase);
+            this.clearCache();
         }
         created(jsonObj) {
             this.res.writeHead(201, { 'content-type': 'application/json' });
             this.end(JSON.stringify(jsonObj));
-            Cache.clear(this.urlBase);
+            this.clearCache();
         }
         JSON(jsonObj, ETag = "", fromCache = false) {
             if (ETag != "")
@@ -57,9 +61,8 @@ module.exports =
             else
                 this.res.writeHead(200, { 'content-type': 'application/json' });
             if (jsonObj != null) {
-                if (!fromCache)
-                    // dont cache it again
-                    Cache.add(this.endpoint, jsonObj, ETag);
+                if (!fromCache) // prevent from cache it again
+                    this.AddInCache(jsonObj, ETag);
                 let content = JSON.stringify(jsonObj);
                 this.end(content);
             } else {
@@ -80,7 +83,7 @@ module.exports =
         noContent() {
             // no content status
             this.status(204);
-            Cache.clear(this.urlBase);
+            this.clearCache();
         }
         notFound() {
             // not found status

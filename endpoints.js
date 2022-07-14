@@ -1,11 +1,11 @@
 ////This funciton return the endpoints list in html
-exports.list = (res) => {
-    function EnumerateEndpoints(controllerFile){
+exports.list = (HttpContext) => {
+    function EnumerateEndpoints(HttpContext, controllerFile){
         let endpoints = "";
         // get the controller class       
         let Controller = require('./controllers/' + controllerFile);
         // make instance on controller class
-        let controller = new Controller(null, null);
+        let controller = new Controller(HttpContext);
         // get all the owned properties of controller class prototype
         let methods = Object.getOwnPropertyNames(Object.getPrototypeOf(controller));
         // get the model name
@@ -57,16 +57,16 @@ exports.list = (res) => {
         if (err) {
           console.log("No endpoints");
         } else {
-            // for each directory in controller directoty
+            // for each directory in controller directoty6
             files.forEach(function(file) {
                 // if not Controller base class
                 if (file != 'Controller.js') {
                     // expose all endpoints
-                    content += EnumerateEndpoints(file);
+                    content += EnumerateEndpoints(HttpContext, file);
                 }
             });
-            res.writeHead(200, {'content-type':'text/html'});
-            res.end(content + "</div>" );
+            HttpContext.res.writeHead(200, {'content-type':'text/html'});
+            HttpContext.res.end(content + "</div>" );
         }
     });
 }

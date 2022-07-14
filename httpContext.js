@@ -9,7 +9,7 @@ module.exports =
             this.res = res;
             this.path = utilities.decomposePath(req.url);
             this.params = this.path.params;
-            this.response = new Response(req, res);
+            this.response = new Response(this);
             this.secure = req.headers['x-forwarded-proto'] != undefined;
             this.host = (this.secure ? "https://" : "http://") + req.headers["host"];
             this.hostIp = req.headers['x-forwarded-for'] != undefined ? req.headers['x-forwarded-for'] : "127.0.0.1";
