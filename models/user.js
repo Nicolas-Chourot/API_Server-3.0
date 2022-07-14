@@ -1,4 +1,4 @@
-const Model = require('./Model');
+const Model = require('./model');
 module.exports = 
 class User extends Model{
     constructor(name, email, password, avatarGUID)

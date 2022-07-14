@@ -1,4 +1,4 @@
-const Model = require('./Model');
+const Model = require('./model');
 module.exports = 
 class Bookmark extends Model{
     constructor(name, url, category, userId)
@@ -9,7 +9,6 @@ class Bookmark extends Model{
         this.Category = category !== undefined ? category : "";
 
         this.setKey("Name");
-        this.addValidator('Id','integer');
         this.addValidator('Name','string');
         this.addValidator('Url','url');
         this.addValidator('Category','string');
