@@ -66,7 +66,7 @@ module.exports =
                     console.log(clc.green('<-------------------------', time, '-------------------------'));
                     console.log(clc.bold(clc.green(`Request --> [${this.httpContext.req.method}::${this.httpContext.req.url}]`)));
                     console.log("User agent ", this.httpContext.req.headers["user-agent"]);
-                    console.log("Host ", this.httpContext.hostIp.substring(0,15), "::", this.httpContext.host);
+                    console.log("Host ", this.httpContext.hostIp.substring(0, 15), "::", this.httpContext.host);
                     if (this.httpContext.payload)
                         console.log("Request payload ", JSON.stringify(this.httpContext.payload).substring(0, 127) + "...");
                 }
@@ -100,6 +100,7 @@ module.exports =
                     "Used size:", Math.round(used.heapUsed / 1024 / 1024 * 100) / 100, "Mb"));
         }
         async handleHttpResquest(req, res) {
+            
             this.httpContext = await HttpContext.create(req, res);
             this.showRequestInfo();
             if (!(await this.middlewaresPipeline.handleHttpRequest(this.httpContext)))

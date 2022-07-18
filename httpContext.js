@@ -18,7 +18,7 @@ module.exports =
         }
         static get() { return httpContext; }
         getJSONPayload() {
-            return new Promise((resolve) => {
+            return new Promise(resolve => {
                 if (this.req.headers['content-type'] == "application/json") {
                     let body = [];
                     this.req.on('data', chunk => {

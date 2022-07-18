@@ -37,7 +37,7 @@ class GetRequestsCacheManager {
             let index = 0;
             for(let endpoint of getRequestsCache){
                 // target all entries related to the same APIendpoint url base
-                if (endpoint.url.indexOf(url.toLowerCase()) > -1) 
+                if (endpoint.url.toLowerCase().indexOf(url.toLowerCase()) > -1) 
                     indexToDelete.push(index);
                 index ++;
             }
